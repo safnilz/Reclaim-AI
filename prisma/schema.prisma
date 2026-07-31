@@ -1,0 +1,31 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model ChatHistory {
+  id        String   @id @default(cuid())
+  userId    String   @default("default_user")
+  role      String   // 'user' or 'assistant'
+  content   String
+  createdAt DateTime @default(now())
+}
+
+model WeeklyReview {
+  id             String   @id @default(cuid())
+  salespersonId  String
+  salespersonName String
+  reviewContent  String   // The AI-generated coaching questions/review
+  createdAt      DateTime @default(now())
+}
+
+model UserSettings {
+  id            String   @id @default(cuid())
+  key           String   @unique
+  value         String
+  updatedAt     DateTime @updatedAt
+}
