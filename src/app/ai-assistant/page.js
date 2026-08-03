@@ -5,16 +5,18 @@ import { Bot, User, Send, Target } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 
 export default function AIAssistantPage() {
-  const { messages, isLoading, error, append } = useChat();
+  const { messages, status, error, sendMessage } = useChat();
   const [input, setInput] = useState('');
   const messagesEndRef = useRef(null);
+
+  const isLoading = status !== 'ready' && status !== 'error' && status !== undefined;
 
   const handleInputChange = (e) => setInput(e.target.value);
   
   const handleSubmit = (e) => {
     e.preventDefault();
     if (!input.trim() || isLoading) return;
-    append({ role: 'user', content: input });
+    sendMessage({ role: 'user', content: input });
     setInput('');
   };
 
@@ -42,13 +44,13 @@ export default function AIAssistantPage() {
               <p>Ask me about your stale deals, missing data, or specific pipeline metrics.</p>
               <div className="flex gap-2">
                 <button 
-                  onClick={() => append({ role: 'user', content: "Summarize my current pipeline health." })} 
+                  onClick={() => sendMessage({ role: 'user', content: "Summarize my current pipeline health." })} 
                   className="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 rounded-lg text-xs text-slate-300 transition-colors"
                 >
                   Summarize pipeline health
                 </button>
                 <button 
-                  onClick={() => append({ role: 'user', content: "Which deals are missing a decision maker?" })} 
+                  onClick={() => sendMessage({ role: 'user', content: "Which deals are missing a decision maker?" })} 
                   className="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 rounded-lg text-xs text-slate-300 transition-colors"
                 >
                   Missing decision makers?
