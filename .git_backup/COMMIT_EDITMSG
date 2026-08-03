@@ -1,0 +1,1 @@
+Fix Vercel build: Force dynamic rendering to prevent build-time API calls

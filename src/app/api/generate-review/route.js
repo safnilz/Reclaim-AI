@@ -8,7 +8,11 @@ export const maxDuration = 30;
 
 export async function POST(req) {
   try {
-    const { salespersonName, deals } = await req.json();
+    const { salespersonId, salespersonName, deals } = await req.json();
+
+    if (!salespersonId) {
+      return new Response(JSON.stringify({ error: "salespersonId is required" }), { status: 400 });
+    }
 
     const systemPrompt = `You are a strict, data-driven Commercial Director preparing for a weekly 1-on-1 with your salesperson, ${salespersonName}.
 Here is their current active pipeline from Zoho CRM:

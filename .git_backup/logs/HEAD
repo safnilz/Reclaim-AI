@@ -1,0 +1,6 @@
+0000000000000000000000000000000000000000 f88b933264f3f890506d97665be5bc59f5d8a516 Safnilz <safnilz@github.com> 1785494608 +0400	commit (initial): Initial commit
+f88b933264f3f890506d97665be5bc59f5d8a516 0000000000000000000000000000000000000000 Safnilz <safnilz@github.com> 1785494608 +0400	Branch: renamed refs/heads/master to refs/heads/main
+0000000000000000000000000000000000000000 f88b933264f3f890506d97665be5bc59f5d8a516 Safnilz <safnilz@github.com> 1785494608 +0400	Branch: renamed refs/heads/master to refs/heads/main
+f88b933264f3f890506d97665be5bc59f5d8a516 cf0c49aaf434a5f08063639027fd0dda4f946ab3 Safnilz <safnilz@github.com> 1785506294 +0400	commit: Fix Vercel build error: Add missing @ai-sdk/groq dependency
+cf0c49aaf434a5f08063639027fd0dda4f946ab3 554927236ac1dc0577e1a3f07c159121a53f9fdd Safnilz <safnilz@github.com> 1785506730 +0400	commit: Fix Vercel build: Add prisma generate to build step
+554927236ac1dc0577e1a3f07c159121a53f9fdd 383b7e0a5c395042c328448ed8269eb32ea9845e Safnilz <safnilz@github.com> 1785742557 +0400	commit: Fix Vercel build: Force dynamic rendering to prevent build-time API calls
