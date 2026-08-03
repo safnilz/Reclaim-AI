@@ -2,11 +2,21 @@
 
 import { useChat } from '@ai-sdk/react';
 import { Bot, User, Send, Target } from 'lucide-react';
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 export default function AIAssistantPage() {
-  const { messages, input, handleInputChange, handleSubmit, isLoading, error, append } = useChat();
+  const { messages, isLoading, error, append } = useChat();
+  const [input, setInput] = useState('');
   const messagesEndRef = useRef(null);
+
+  const handleInputChange = (e) => setInput(e.target.value);
+  
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    if (!input.trim() || isLoading) return;
+    append({ role: 'user', content: input });
+    setInput('');
+  };
 
   // Auto-scroll to bottom of chat
   useEffect(() => {
