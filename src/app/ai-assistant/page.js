@@ -5,7 +5,7 @@ import { Bot, User, Send, Target } from 'lucide-react';
 import { useEffect, useRef } from 'react';
 
 export default function AIAssistantPage() {
-  const { messages, input, handleInputChange, handleSubmit, isLoading, error } = useChat();
+  const { messages, input, handleInputChange, handleSubmit, isLoading, error, append } = useChat();
   const messagesEndRef = useRef(null);
 
   // Auto-scroll to bottom of chat
@@ -31,8 +31,18 @@ export default function AIAssistantPage() {
               <Target className="w-12 h-12 text-slate-700" />
               <p>Ask me about your stale deals, missing data, or specific pipeline metrics.</p>
               <div className="flex gap-2">
-                <button onClick={() => handleInputChange({ target: { value: "Summarize my current pipeline health." }})} className="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 rounded-lg text-xs text-slate-300 transition-colors">Summarize pipeline health</button>
-                <button onClick={() => handleInputChange({ target: { value: "Which deals are missing a decision maker?" }})} className="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 rounded-lg text-xs text-slate-300 transition-colors">Missing decision makers?</button>
+                <button 
+                  onClick={() => append({ role: 'user', content: "Summarize my current pipeline health." })} 
+                  className="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 rounded-lg text-xs text-slate-300 transition-colors"
+                >
+                  Summarize pipeline health
+                </button>
+                <button 
+                  onClick={() => append({ role: 'user', content: "Which deals are missing a decision maker?" })} 
+                  className="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 rounded-lg text-xs text-slate-300 transition-colors"
+                >
+                  Missing decision makers?
+                </button>
               </div>
             </div>
           )}
