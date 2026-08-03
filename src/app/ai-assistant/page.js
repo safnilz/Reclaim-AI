@@ -11,6 +11,10 @@ export default function AIAssistantPage() {
 
   const isLoading = status !== 'ready' && status !== 'error' && status !== undefined;
 
+  useEffect(() => {
+    console.log("MESSAGES STATE:", JSON.stringify(messages, null, 2));
+  }, [messages]);
+
   const handleInputChange = (e) => setInput(e.target.value);
   
   const handleSubmit = (e) => {
