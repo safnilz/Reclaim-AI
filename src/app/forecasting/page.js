@@ -83,8 +83,14 @@ export default async function ForecastingPage() {
   unpaidInvoices.forEach(inv => {
     if (!inv.dueDate) return;
     
-    const date = parseISO(inv.dueDate);
+    let date = parseISO(inv.dueDate);
     if (!isValid(date)) return;
+    
+    // If the invoice is overdue (in the past), we expect to collect it this month.
+    // So we push it to the current month to avoid stretching the chart into past years.
+    if (isBefore(date, startOfMonth(today))) {
+      date = today;
+    }
     
     const month = format(date, 'MMM yyyy');
     const sortKey = format(date, 'yyyy-MM');
