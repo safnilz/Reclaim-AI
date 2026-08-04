@@ -2,9 +2,18 @@ import { differenceInDays } from 'date-fns';
 import { stageProbabilities } from './mockData';
 
 export function calculateQualificationScore(opportunity) {
-  const mandatoryFields = [
-    'name', 'accountId', 'ownerId', 'expectedRevenue', 'closeDate', 'nextAction'
-  ];
+  // Base fields required for every deal
+  let mandatoryFields = ['dealName', 'accountId', 'ownerId'];
+
+  // Add stage-specific mandatory fields based on CRM Blueprint
+  const stage = opportunity.stage || '';
+  if (stage === 'Qualified Lead') {
+    mandatoryFields = [...mandatoryFields, 'expectedRevenue', 'nextAction', 'nextActionDate', 'estimatedDirectCost'];
+  } else if (stage === 'Route & Margin Approved') {
+    mandatoryFields = [...mandatoryFields, 'proposalSentDate', 'decisionMaker', 'closeDate'];
+  } else if (stage === 'Proposal Submitted') {
+    mandatoryFields = [...mandatoryFields, 'keyObjectionOpenIssue', 'nextAction', 'nextActionDate'];
+  }
   
   let score = 0;
   let missingFields = [];

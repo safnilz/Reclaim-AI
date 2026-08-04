@@ -3,13 +3,16 @@ import { subDays, addDays, formatISO } from 'date-fns';
 const today = new Date();
 
 export const stageProbabilities = {
-  'Qualification': 10,
-  'Needs Analysis': 20,
-  'Value Proposition': 40,
-  'Identify Decision Makers': 60,
-  'Proposal/Price Quote': 75,
-  'Negotiation/Review': 90,
-  'Closed Won': 100,
+  'Qualified Lead': 10,
+  'Commercial Assessment': 20,
+  'Route & Margin Approved': 40,
+  'Proposal Submitted': 60,
+  'Negotiation or Contracting': 75,
+  'Contract Signed': 90,
+  'Service Execution': 95,
+  'Job Completed': 100,
+  'Revenue Collected': 100,
+  'Live / Active Account': 100,
   'Closed Lost': 0,
 };
 

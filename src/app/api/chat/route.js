@@ -45,17 +45,29 @@ Be concise, assertive, and focus on commercial outcomes, pipeline health, and mi
 LIVE ZOHO CRM PIPELINE DATA:
 ${JSON.stringify(contextData)}`;
 
+    // The AI SDK client sends 'parts' for assistant messages when using toUIMessageStreamResponse.
+    // The AI provider requires 'content' to be a string. We must normalize this to prevent validation errors.
+    const normalizedMessages = messages.map(m => {
+      if (m.role === 'assistant' && m.parts && !m.content) {
+        return {
+          ...m,
+          content: m.parts.filter(p => p.type === 'text').map(p => p.text).join('')
+        };
+      }
+      return m;
+    });
+
     const result = streamText({
       model: groq('llama-3.1-8b-instant'), // Using the same model from redata
       system: systemPrompt,
-      messages,
+      messages: normalizedMessages,
     });
 
-    return result.toDataStreamResponse();
+    return result.toUIMessageStreamResponse();
   } catch (error) {
     console.error("AI Assistant Error:", error);
     return new Response(
-      JSON.stringify({ error: "Failed to generate AI response. Make sure GROQ_API_KEY is set." }),
+      JSON.stringify({ error: "Failed to generate AI response: " + error.message, stack: error.stack }),
       { status: 500, headers: { 'Content-Type': 'application/json' } }
     );
   }

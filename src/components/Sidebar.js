@@ -22,11 +22,11 @@ const navigation = [
 
 export default function Sidebar() {
   return (
-    <div className="flex h-full w-64 flex-col bg-slate-900 border-r border-slate-800">
-      <div className="flex h-16 items-center px-6 border-b border-slate-800">
-        <h1 className="text-lg font-bold text-white tracking-tight flex items-center gap-2">
+    <div className="flex h-full w-64 flex-col bg-white border-r border-slate-200">
+      <div className="flex h-16 items-center px-6 border-b border-slate-200">
+        <h1 className="text-lg font-bold text-slate-900 tracking-tight flex items-center gap-2">
           <Bot className="w-5 h-5 text-blue-500" />
-          ReClaim AI
+          CRM AI Assistant
         </h1>
       </div>
       <nav className="flex-1 overflow-y-auto py-4 px-3 space-y-1">
@@ -34,21 +34,21 @@ export default function Sidebar() {
           <Link
             key={item.name}
             href={item.href}
-            className="text-slate-300 hover:bg-slate-800 hover:text-white group flex items-center px-3 py-2 text-sm font-medium rounded-md transition-colors"
+            className="text-slate-600 hover:bg-slate-100 hover:text-slate-900 group flex items-center px-3 py-2 text-sm font-medium rounded-md transition-colors"
           >
-            <item.icon className="text-slate-400 group-hover:text-blue-400 mr-3 flex-shrink-0 h-5 w-5" aria-hidden="true" />
+            <item.icon className="text-slate-9000 group-hover:text-blue-400 mr-3 flex-shrink-0 h-5 w-5" aria-hidden="true" />
             {item.name}
           </Link>
         ))}
       </nav>
-      <div className="p-4 border-t border-slate-800">
+      <div className="p-4 border-t border-slate-200">
         <div className="flex items-center">
-          <div className="h-8 w-8 rounded-full bg-blue-600 flex items-center justify-center text-white font-bold text-xs">
+          <div className="h-8 w-8 rounded-full bg-blue-600 flex items-center justify-center text-slate-900 font-bold text-xs">
             CEO
           </div>
           <div className="ml-3">
-            <p className="text-sm font-medium text-white">Management User</p>
-            <p className="text-xs text-slate-400">Mock Data Mode</p>
+            <p className="text-sm font-medium text-slate-900">Management User</p>
+            <p className="text-xs text-slate-9000">Mock Data Mode</p>
           </div>
         </div>
       </div>

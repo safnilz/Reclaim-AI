@@ -34,13 +34,13 @@ export default function WeeklyReviewClient({ teamArray }) {
     <div className="p-8 max-w-6xl mx-auto space-y-8">
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-3xl font-bold text-white tracking-tight flex items-center gap-3">
+          <h1 className="text-3xl font-bold text-slate-900 tracking-tight flex items-center gap-3">
             <FileText className="w-8 h-8 text-emerald-500" />
             Weekly Commercial Review
           </h1>
-          <p className="text-slate-400 mt-1">AI-generated coaching preparation powered by Groq and live Zoho data.</p>
+          <p className="text-slate-9000 mt-1">AI-generated coaching preparation powered by AI and live Zoho data.</p>
         </div>
-        <button className="flex items-center gap-2 px-4 py-2 bg-slate-800 hover:bg-slate-700 text-white text-sm font-medium rounded-lg border border-slate-700 transition-colors">
+        <button className="flex items-center gap-2 px-4 py-2 bg-slate-100 hover:bg-slate-700 text-slate-900 text-sm font-medium rounded-lg border border-slate-300 transition-colors">
           <Download className="w-4 h-4" /> Export PDF
         </button>
       </div>
@@ -51,17 +51,17 @@ export default function WeeklyReviewClient({ teamArray }) {
           const displayQuestions = reviews[person.name] || person.savedQuestions;
           
           return (
-            <div key={person.name} className="bg-slate-900 border border-slate-800 rounded-xl overflow-hidden shadow-sm">
-              <div className="bg-slate-800/50 px-6 py-4 border-b border-slate-800 flex justify-between items-center">
+            <div key={person.name} className="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm">
+              <div className="bg-slate-100/50 px-6 py-4 border-b border-slate-200 flex justify-between items-center">
                 <div>
-                  <h2 className="text-lg font-bold text-white">{person.name}</h2>
-                  <p className="text-slate-400 text-sm">{person.deals.length} Active Deals • {formatCurrency(person.totalValue)}</p>
+                  <h2 className="text-lg font-bold text-slate-900">{person.name}</h2>
+                  <p className="text-slate-9000 text-sm">{person.deals.length} Active Deals • {formatCurrency(person.totalValue)}</p>
                 </div>
                 <div className="text-right">
-                  <p className="text-xs text-slate-500 uppercase tracking-wider font-bold mb-1">Pipeline Share</p>
+                  <p className="text-xs text-slate-9000 uppercase tracking-wider font-bold mb-1">Pipeline Share</p>
                   <div className="flex items-center gap-3 justify-end">
                     <span className="text-emerald-400 font-bold">{person.percentageOfPipeline}%</span>
-                    <div className="w-32 bg-slate-800 rounded-full h-2">
+                    <div className="w-32 bg-slate-100 rounded-full h-2">
                       <div className="bg-emerald-500 h-2 rounded-full" style={{ width: `${person.percentageOfPipeline}%` }}></div>
                     </div>
                   </div>
@@ -69,35 +69,35 @@ export default function WeeklyReviewClient({ teamArray }) {
               </div>
               
               <div className="p-6">
-                <div className="flex justify-between items-center border-b border-slate-800 pb-2 mb-4">
-                  <h3 className="text-sm font-bold text-slate-300 uppercase tracking-wider flex items-center gap-2">
+                <div className="flex justify-between items-center border-b border-slate-200 pb-2 mb-4">
+                  <h3 className="text-sm font-bold text-slate-600 uppercase tracking-wider flex items-center gap-2">
                     <Bot className="w-4 h-4 text-blue-500" /> AI Generated Questions
                   </h3>
                   <button 
                     onClick={() => generateReview(person)}
                     disabled={isGenerating}
-                    className="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 disabled:bg-slate-800 disabled:text-slate-500 text-white text-xs font-medium rounded-lg transition-colors flex items-center gap-2"
+                    className="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 disabled:bg-slate-100 disabled:text-slate-9000 text-slate-900 text-xs font-medium rounded-lg transition-colors flex items-center gap-2"
                   >
                     {isGenerating ? <Loader2 className="w-3 h-3 animate-spin" /> : "Generate New Review"}
                   </button>
                 </div>
                 
                 {isGenerating ? (
-                  <div className="py-8 text-center text-slate-500 flex flex-col items-center gap-3">
+                  <div className="py-8 text-center text-slate-9000 flex flex-col items-center gap-3">
                     <Loader2 className="w-6 h-6 animate-spin text-blue-500" />
-                    <p className="text-sm">Groq AI is analyzing pipeline data...</p>
+                    <p className="text-sm">AI AI is analyzing pipeline data...</p>
                   </div>
                 ) : displayQuestions.length > 0 ? (
                   <ul className="space-y-4">
                     {displayQuestions.map((q, i) => (
-                      <li key={i} className="flex gap-3 text-sm text-slate-300 bg-slate-800/30 p-3 rounded-lg border border-slate-800/50">
+                      <li key={i} className="flex gap-3 text-sm text-slate-600 bg-slate-100/30 p-3 rounded-lg border border-slate-200/50">
                         <span className="text-blue-500 font-bold shrink-0">Q.</span>
                         {q}
                       </li>
                     ))}
                   </ul>
                 ) : (
-                  <div className="py-8 text-center text-slate-500">
+                  <div className="py-8 text-center text-slate-9000">
                     <p className="text-sm">No review generated for this week yet. Click generate above.</p>
                   </div>
                 )}
