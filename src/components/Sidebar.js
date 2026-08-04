@@ -47,8 +47,8 @@ export default function Sidebar() {
             CEO
           </div>
           <div className="ml-3">
-            <p className="text-sm font-medium text-slate-900">Management User</p>
-            <p className="text-xs text-slate-9000">Mock Data Mode</p>
+            <p className="text-sm font-medium text-slate-900">Management View</p>
+            <p className="text-xs text-slate-500">Live CRM Data</p>
           </div>
         </div>
       </div>

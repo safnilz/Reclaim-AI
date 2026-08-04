@@ -38,7 +38,7 @@ export async function POST(req) {
     };
 
     // Inject the real-time context into the system prompt
-    const systemPrompt = `You are the AI Commercial Director for ReClaim.
+    const systemPrompt = `You are the AI Commercial Director of Ehfaaz.
 Your job is to answer the user's questions strictly based on the live Zoho CRM data provided below.
 Be concise, assertive, and focus on commercial outcomes, pipeline health, and missing data.
 
