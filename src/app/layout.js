@@ -11,14 +11,15 @@ export const metadata = {
   description: "AI-powered Commercial Director for ReClaim",
 };
 
+import NavigationLayout from "@/components/NavigationLayout";
+
 export default function RootLayout({ children }) {
   return (
-    <html lang="en" className="dark">
-      <body className={`${inter.className} bg-slate-50 text-slate-900 flex h-screen overflow-hidden`}>
-        <Sidebar />
-        <main className="flex-1 h-full overflow-y-auto bg-slate-50">
+    <html lang="en" className="light">
+      <body className={`${inter.className} bg-slate-50 text-slate-900`}>
+        <NavigationLayout sidebar={<Sidebar />}>
           {children}
-        </main>
+        </NavigationLayout>
       </body>
     </html>
   );

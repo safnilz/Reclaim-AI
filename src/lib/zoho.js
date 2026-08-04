@@ -151,10 +151,10 @@ export async function searchModule(module, criteria) {
 }
 
 // ZOHO BOOKS INTEGRATION
-const booksClientId = '1000.P1FO2LAHLWSQ2A2YVBZAQCAS5TZIOT';
-const booksClientSecret = '237ce6a87693384ed98953545f0900eb55717a8e17';
-const booksRefreshToken = '1000.fc6a058e2b27867f89040f3d5db6e075.de536ec3a7cb29dc7f32a9a3a6842a3e';
-const booksOrgId = '732637184';
+const booksClientId = process.env.ZOHO_BOOKS_CLIENT_ID;
+const booksClientSecret = process.env.ZOHO_BOOKS_CLIENT_SECRET;
+const booksRefreshToken = process.env.ZOHO_BOOKS_REFRESH_TOKEN;
+const booksOrgId = process.env.ZOHO_BOOKS_ORG_ID;
 
 export async function fetchCollectedRevenueBySalesperson() {
   const tokenUrl = `https://accounts.zoho.com/oauth/v2/token?refresh_token=${booksRefreshToken}&client_id=${booksClientId}&client_secret=${booksClientSecret}&grant_type=refresh_token`;
