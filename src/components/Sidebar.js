@@ -24,10 +24,10 @@ export default function Sidebar() {
   return (
     <div className="flex h-full w-full flex-col bg-white border-r border-slate-200">
       <div className="flex h-16 items-center px-6 border-b border-slate-200">
-        <h1 className="text-lg font-bold text-slate-900 tracking-tight flex items-center gap-2">
+        <Link href="/" className="text-lg font-bold text-slate-900 tracking-tight flex items-center gap-2 hover:opacity-80 transition-opacity">
           <Bot className="w-5 h-5 text-blue-500" />
-          CRM AI Assistant
-        </h1>
+          Ehfaaz CRM Assistant
+        </Link>
       </div>
       <nav className="flex-1 overflow-y-auto py-4 px-3 space-y-1">
         {navigation.map((item) => (
