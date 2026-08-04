@@ -25,8 +25,7 @@ export default function LoginPage() {
       });
 
       if (res.ok) {
-        router.push('/');
-        router.refresh();
+        window.location.href = '/';
       } else {
         setError('Invalid username or password');
       }
