@@ -156,16 +156,17 @@ const booksClientSecret = process.env.ZOHO_BOOKS_CLIENT_SECRET;
 const booksRefreshToken = process.env.ZOHO_BOOKS_REFRESH_TOKEN;
 const booksOrgId = process.env.ZOHO_BOOKS_ORG_ID;
 
-export async function fetchCollectedRevenueBySalesperson() {
+// Helper to fetch all invoices with basic caching (1 hour)
+async function _fetchAllBooksInvoices() {
   const tokenUrl = `https://accounts.zoho.com/oauth/v2/token?refresh_token=${booksRefreshToken}&client_id=${booksClientId}&client_secret=${booksClientSecret}&grant_type=refresh_token`;
   
   try {
-    const tokenRes = await fetch(tokenUrl, { method: 'POST' });
+    const tokenRes = await fetch(tokenUrl, { method: 'POST', cache: 'no-store' });
     const tokenData = await tokenRes.json();
     
     if (tokenData.error) {
       console.error('Failed to get Zoho Books token:', tokenData.error);
-      return {};
+      return [];
     }
     
     const accessToken = tokenData.access_token;
@@ -177,7 +178,8 @@ export async function fetchCollectedRevenueBySalesperson() {
     while(hasMore) {
       const invoicesUrl = `https://www.zohoapis.com/books/v3/invoices?organization_id=${booksOrgId}&page=${page}`;
       const headers = { 'Authorization': `Zoho-oauthtoken ${accessToken}` };
-      const invoicesRes = await fetch(invoicesUrl, { headers });
+      // Cache this massive payload for 1 hour to prevent rate limits during forecasting
+      const invoicesRes = await fetch(invoicesUrl, { headers, next: { revalidate: 3600 } });
       const invoicesData = await invoicesRes.json();
       
       if (invoicesData.invoices) {
@@ -191,74 +193,66 @@ export async function fetchCollectedRevenueBySalesperson() {
       }
     }
     
-    // Group by salesperson
-    const collectedBySalesperson = {};
-    allInvoices.forEach(inv => {
-      const sp = inv.salesperson_name || 'Unknown';
-      const collected = (inv.total || 0) - (inv.balance || 0);
-      if (collected > 0) {
-        if (!collectedBySalesperson[sp]) {
-          collectedBySalesperson[sp] = 0;
-        }
-        collectedBySalesperson[sp] += collected;
-      }
-    });
-    
-    return collectedBySalesperson;
-    
+    return allInvoices;
   } catch (err) {
     console.error('Error fetching from Zoho Books:', err);
-    return {};
+    return [];
   }
 }
 
-export async function fetchUnpaidInvoices() {
-  const tokenUrl = `https://accounts.zoho.com/oauth/v2/token?refresh_token=${booksRefreshToken}&client_id=${booksClientId}&client_secret=${booksClientSecret}&grant_type=refresh_token`;
+export async function fetchCollectedRevenueBySalesperson() {
+  const allInvoices = await _fetchAllBooksInvoices();
   
-  try {
-    const tokenRes = await fetch(tokenUrl, { method: 'POST', cache: 'no-store' });
-    const tokenData = await tokenRes.json();
-    
-    if (tokenData.error) {
-      console.error('Failed to get Zoho Books token for unpaid invoices:', tokenData.error);
-      return [];
-    }
-    
-    const accessToken = tokenData.access_token;
-    
-    let hasMore = true;
-    let page = 1;
-    let allInvoices = [];
-    
-    while(hasMore) {
-      const invoicesUrl = `https://www.zohoapis.com/books/v3/invoices?organization_id=${booksOrgId}&page=${page}`;
-      const headers = { 'Authorization': `Zoho-oauthtoken ${accessToken}` };
-      const invoicesRes = await fetch(invoicesUrl, { headers, cache: 'no-store' });
-      const invoicesData = await invoicesRes.json();
-      
-      if (invoicesData.invoices) {
-        // Filter invoices with a balance > 0 and not void
-        const unpaid = invoicesData.invoices.filter(i => (i.balance || 0) > 0 && i.status !== 'void');
-        allInvoices = allInvoices.concat(unpaid);
+  const collectedBySalesperson = {};
+  allInvoices.forEach(inv => {
+    const sp = inv.salesperson_name || 'Unknown';
+    const collected = (inv.total || 0) - (inv.balance || 0);
+    if (collected > 0) {
+      if (!collectedBySalesperson[sp]) {
+        collectedBySalesperson[sp] = 0;
       }
-      
-      if (invoicesData.page_context && invoicesData.page_context.has_more_page) {
-        page++;
-      } else {
-        hasMore = false;
-      }
+      collectedBySalesperson[sp] += collected;
     }
+  });
+  
+  return collectedBySalesperson;
+}
+
+export async function fetchUnpaidInvoices() {
+  const allInvoices = await _fetchAllBooksInvoices();
+  
+  const unpaid = allInvoices.filter(i => (i.balance || 0) > 0 && i.status !== 'void');
+  
+  return unpaid.map(inv => ({
+    id: inv.invoice_id,
+    number: inv.invoice_number,
+    customerName: inv.customer_name,
+    dueDate: inv.due_date,
+    balance: inv.balance
+  }));
+}
+
+export async function fetchCustomerInvoiceHistory() {
+  const allInvoices = await _fetchAllBooksInvoices();
+  
+  const customerHistory = {};
+  
+  allInvoices.forEach(inv => {
+    if (inv.status === 'void') return;
     
-    return allInvoices.map(inv => ({
-      id: inv.invoice_id,
-      number: inv.invoice_number,
-      customerName: inv.customer_name,
-      dueDate: inv.due_date,
-      balance: inv.balance
-    }));
-    
-  } catch (err) {
-    console.error('Error fetching unpaid invoices from Zoho Books:', err);
-    return [];
-  }
+    const custId = inv.customer_id;
+    if (!customerHistory[custId]) {
+      customerHistory[custId] = {
+        customerId: custId,
+        customerName: inv.customer_name,
+        invoices: []
+      };
+    }
+    customerHistory[custId].invoices.push({
+      date: inv.date,
+      total: inv.total || 0
+    });
+  });
+  
+  return Object.values(customerHistory);
 }

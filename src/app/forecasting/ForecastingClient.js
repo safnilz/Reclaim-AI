@@ -8,6 +8,7 @@ export default function ForecastingClient({ chartData }) {
   const totalCommit = chartData.reduce((sum, data) => sum + data.commit, 0);
   const totalBestCase = chartData.reduce((sum, data) => sum + data.bestCase, 0);
   const totalInvoiced = chartData.reduce((sum, data) => sum + data.invoiced, 0);
+  const totalHistorical = chartData.reduce((sum, data) => sum + (data.historical || 0), 0);
 
   return (
     <div className="p-8 max-w-7xl mx-auto space-y-8 pb-20">
@@ -19,7 +20,7 @@ export default function ForecastingClient({ chartData }) {
         <p className="text-slate-500 mt-2 text-lg">Projected cash flow combining Zoho Books invoices and CRM pipelines.</p>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
         
         <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm flex items-center justify-between">
           <div>
@@ -27,6 +28,14 @@ export default function ForecastingClient({ chartData }) {
             <p className="text-3xl font-bold text-emerald-600">{formatCurrency(totalInvoiced)}</p>
           </div>
           <Receipt className="w-12 h-12 text-emerald-500/20" />
+        </div>
+
+        <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm flex items-center justify-between">
+          <div>
+            <p className="text-slate-500 text-sm font-semibold mb-1 uppercase tracking-wider">Projected Recurring</p>
+            <p className="text-3xl font-bold text-purple-600">{formatCurrency(totalHistorical)}</p>
+          </div>
+          <TrendingUp className="w-12 h-12 text-purple-500/20" />
         </div>
 
         <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm flex items-center justify-between">
@@ -66,6 +75,10 @@ export default function ForecastingClient({ chartData }) {
                     <stop offset="5%" stopColor="#4f46e5" stopOpacity={0.2}/>
                     <stop offset="95%" stopColor="#4f46e5" stopOpacity={0}/>
                   </linearGradient>
+                  <linearGradient id="colorHistorical" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#9333ea" stopOpacity={0.4}/>
+                    <stop offset="95%" stopColor="#9333ea" stopOpacity={0}/>
+                  </linearGradient>
                 </defs>
                 <XAxis dataKey="name" stroke="#64748b" tick={{ fill: '#64748b' }} />
                 <YAxis 
@@ -103,6 +116,15 @@ export default function ForecastingClient({ chartData }) {
                   stroke="#059669" 
                   fillOpacity={1} 
                   fill="url(#colorInvoiced)" 
+                  strokeWidth={3}
+                />
+                <Area 
+                  type="monotone" 
+                  dataKey="historical" 
+                  name="Projected Recurring"
+                  stroke="#9333ea" 
+                  fillOpacity={1} 
+                  fill="url(#colorHistorical)" 
                   strokeWidth={3}
                 />
               </AreaChart>
