@@ -72,8 +72,8 @@ export default function AIAssistantPage() {
               )}
               <div className={`max-w-[80%] rounded-xl p-4 text-sm ${
                 m.role === 'user' 
-                  ? 'bg-blue-600 text-slate-900 shadow-md shadow-blue-900/20' 
-                  : 'bg-slate-100 text-slate-200 border border-slate-300'
+                  ? 'bg-blue-600 text-white shadow-md shadow-blue-900/20' 
+                  : 'bg-white text-slate-800 border border-slate-200 shadow-sm'
               }`}>
                 <div className="whitespace-pre-wrap">
                   {m.parts 
@@ -94,7 +94,7 @@ export default function AIAssistantPage() {
               <div className="w-8 h-8 rounded-full bg-blue-600/20 border border-blue-500/30 flex items-center justify-center flex-shrink-0">
                 <Bot className="w-4 h-4 text-blue-500" />
               </div>
-              <div className="bg-slate-100 text-slate-200 border border-slate-300 rounded-xl p-4 text-sm flex items-center gap-2">
+              <div className="bg-white text-slate-800 border border-slate-200 shadow-sm rounded-xl p-4 text-sm flex items-center gap-2">
                 <div className="w-2 h-2 bg-blue-500 rounded-full animate-bounce [animation-delay:-0.3s]"></div>
                 <div className="w-2 h-2 bg-blue-500 rounded-full animate-bounce [animation-delay:-0.15s]"></div>
                 <div className="w-2 h-2 bg-blue-500 rounded-full animate-bounce"></div>
