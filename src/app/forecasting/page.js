@@ -41,39 +41,45 @@ export default async function ForecastingPage() {
   
   // 1.5 Calculate recurring revenue projection from history
   const sixMonthsAgo = subMonths(today, 6);
-  const oneYearAgo = subMonths(today, 12);
-  let totalMonthlyRecurring = 0;
-
+  
+  const activeCustomerIds = new Set();
+  
+  // Identify active customers (those with an invoice in the last 6 months)
   customerHistory.forEach(customer => {
     let isActive = false;
-    let trailing12Revenue = 0;
-    
     customer.invoices.forEach(inv => {
       const invDate = parseISO(inv.date);
-      if (!isValid(invDate)) return;
-      
-      // Active if they had an invoice in the last 6 months
-      if (isAfter(invDate, sixMonthsAgo)) {
+      if (isValid(invDate) && isAfter(invDate, sixMonthsAgo)) {
         isActive = true;
       }
-      
-      // Calculate trailing 12 month revenue
-      if (isAfter(invDate, oneYearAgo)) {
-        trailing12Revenue += inv.total;
-      }
     });
-    
     if (isActive) {
-      // Average monthly revenue from this active customer over the last 12 months
-      totalMonthlyRecurring += (trailing12Revenue / 12);
+      activeCustomerIds.add(customer.customerId);
     }
   });
 
-  // Pre-fill next 6 months to ensure projection chart has a runway
+  // Pre-fill next 6 months using the exact same month from the previous year for active customers
   for (let i = 0; i < 6; i++) {
     const projDate = addMonths(today, i);
     const sortKey = format(projDate, 'yyyy-MM');
     const month = format(projDate, 'MMM yyyy');
+    
+    // Target month from the previous year
+    const targetHistoryDate = subMonths(projDate, 12);
+    const historyMonthKey = format(targetHistoryDate, 'yyyy-MM');
+    
+    let historicalRevenue = 0;
+    
+    customerHistory.forEach(customer => {
+      if (activeCustomerIds.has(customer.customerId)) {
+        customer.invoices.forEach(inv => {
+           const invDate = parseISO(inv.date);
+           if (isValid(invDate) && format(invDate, 'yyyy-MM') === historyMonthKey) {
+             historicalRevenue += inv.total;
+           }
+        });
+      }
+    });
     
     monthlyData[sortKey] = {
       name: month,
@@ -81,7 +87,7 @@ export default async function ForecastingPage() {
       bestCase: 0,
       commit: 0,
       invoiced: 0,
-      historical: totalMonthlyRecurring,
+      historical: historicalRevenue,
       deals: 0
     };
   }
@@ -111,13 +117,29 @@ export default async function ForecastingPage() {
     const weightedValue = value * (probability / 100);
     
     if (!monthlyData[sortKey]) {
+      // Calculate historical for this specific out-of-bounds month if needed
+      const targetHistoryDate = subMonths(predictedDate, 12);
+      const historyMonthKey = format(targetHistoryDate, 'yyyy-MM');
+      let historicalRevenue = 0;
+      
+      customerHistory.forEach(customer => {
+        if (activeCustomerIds.has(customer.customerId)) {
+          customer.invoices.forEach(inv => {
+             const invDate = parseISO(inv.date);
+             if (isValid(invDate) && format(invDate, 'yyyy-MM') === historyMonthKey) {
+               historicalRevenue += inv.total;
+             }
+          });
+        }
+      });
+
       monthlyData[sortKey] = {
         name: month,
         sortKey,
         bestCase: 0,
         commit: 0,
         invoiced: 0,
-        historical: totalMonthlyRecurring,
+        historical: historicalRevenue,
         deals: 0
       };
     }
@@ -145,13 +167,29 @@ export default async function ForecastingPage() {
     const value = inv.balance || 0;
     
     if (!monthlyData[sortKey]) {
+      // Calculate historical for this specific out-of-bounds month if needed
+      const targetHistoryDate = subMonths(date, 12);
+      const historyMonthKey = format(targetHistoryDate, 'yyyy-MM');
+      let historicalRevenue = 0;
+      
+      customerHistory.forEach(customer => {
+        if (activeCustomerIds.has(customer.customerId)) {
+          customer.invoices.forEach(inv => {
+             const invDate = parseISO(inv.date);
+             if (isValid(invDate) && format(invDate, 'yyyy-MM') === historyMonthKey) {
+               historicalRevenue += inv.total;
+             }
+          });
+        }
+      });
+
       monthlyData[sortKey] = {
         name: month,
         sortKey,
         bestCase: 0,
         commit: 0,
         invoiced: 0,
-        historical: totalMonthlyRecurring,
+        historical: historicalRevenue,
         deals: 0
       };
     }
