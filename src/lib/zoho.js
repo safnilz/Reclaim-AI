@@ -116,7 +116,7 @@ export async function fetchAllActiveDeals(includeClosed = false) {
     const isTargetPipeline = pipelineName.includes('ReClaim') || pipelineName.includes('ReCoVa');
     const is2026 = deal.Closing_Date && deal.Closing_Date.startsWith('2026');
     const ownerName = deal.Owner ? deal.Owner.name : '';
-    const isValidOwner = ownerName !== 'Katherine' && ownerName !== 'Aliyu';
+    const isValidOwner = !ownerName.includes('Katherine') && !ownerName.includes('Aliyu');
     
     return isActive && isTargetPipeline && is2026 && isValidOwner;
   });
@@ -231,13 +231,15 @@ export async function fetchUnpaidInvoices() {
     let allInvoices = [];
     
     while(hasMore) {
-      const invoicesUrl = `https://www.zohoapis.com/books/v3/invoices?organization_id=${booksOrgId}&page=${page}&status=sent,overdue`;
+      const invoicesUrl = `https://www.zohoapis.com/books/v3/invoices?organization_id=${booksOrgId}&page=${page}`;
       const headers = { 'Authorization': `Zoho-oauthtoken ${accessToken}` };
       const invoicesRes = await fetch(invoicesUrl, { headers, cache: 'no-store' });
       const invoicesData = await invoicesRes.json();
       
       if (invoicesData.invoices) {
-        allInvoices = allInvoices.concat(invoicesData.invoices);
+        // Filter invoices with a balance > 0 and not void
+        const unpaid = invoicesData.invoices.filter(i => (i.balance || 0) > 0 && i.status !== 'void');
+        allInvoices = allInvoices.concat(unpaid);
       }
       
       if (invoicesData.page_context && invoicesData.page_context.has_more_page) {
