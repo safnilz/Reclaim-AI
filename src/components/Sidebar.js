@@ -26,7 +26,7 @@ export default function Sidebar() {
       <div className="flex h-16 items-center px-6 border-b border-slate-200">
         <Link href="/" className="text-lg font-bold text-slate-900 tracking-tight flex items-center gap-2 hover:opacity-80 transition-opacity">
           <Bot className="w-5 h-5 text-blue-500" />
-          Ehfaaz CRM Assistant
+          Ehfaaz CRM AI Assistant
         </Link>
       </div>
       <nav className="flex-1 overflow-y-auto py-4 px-3 space-y-1">

@@ -7,7 +7,7 @@ export const dynamic = 'force-dynamic';
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata = {
-  title: "Ehfaaz CRM Assistant",
+  title: "Ehfaaz CRM AI Assistant",
   description: "AI-powered Commercial Director for ReClaim",
 };
 
