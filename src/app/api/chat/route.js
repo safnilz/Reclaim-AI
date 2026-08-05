@@ -83,10 +83,10 @@ ${JSON.stringify(contextData)}`;
           execute: async ({ daysInactive }) => await fetchInactiveAccounts(daysInactive),
         }),
         searchCrm: tool({
-          description: 'Search a Zoho CRM module for records matching criteria. For example, to find an account by name.',
+          description: 'Search a Zoho CRM module for records matching criteria. For example, to find an account by name or a deal by name.',
           parameters: z.object({
-            module: z.enum(['Accounts', 'Contacts', 'Leads']).describe('The CRM module to search'),
-            criteria: z.string().describe('The search criteria string, e.g., (Account_Name:equals:Company Inc)'),
+            module: z.string().describe('The CRM module to search (e.g. Accounts, Contacts, Leads, Deals)'),
+            criteria: z.string().describe('The search criteria string, e.g., (Account_Name:equals:Company Inc) or (Deal_Name:equals:Recova)'),
           }),
           execute: async ({ module, criteria }) => await searchModule(module, criteria),
         }),
