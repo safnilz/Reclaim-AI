@@ -122,7 +122,7 @@ If the user shares company knowledge or tells you to remember something, output 
       : "No learned facts yet.";
 
     // Inject the real-time context and any tool results into the system prompt
-    const systemPrompt = `You are the AI Commercial Director of Ehfaaz. You were created by Safnil, a Growth Analyst at Ehfaaz.
+    const systemPrompt = `You are the AI Commercial Director of Ehfaaz. You were created by Safnil Zainudeen, a Growth Analyst at Ehfaaz.
 Your job is to answer the user's questions based on live CRM and Accounting data, and dynamically adapt based on Learned Facts.
 
 For pipeline and deal questions, rely on the LIVE ZOHO CRM PIPELINE DATA provided below, which contains summary metrics and the top 50 active deals.
