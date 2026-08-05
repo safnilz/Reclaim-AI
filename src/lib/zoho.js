@@ -150,8 +150,10 @@ export async function fetchInactiveAccounts(daysInactive = 200) {
   let allAccounts = [];
   let pageToken = null;
   let hasMore = true;
+  let pageCount = 0;
+  const maxPages = 2; // Hard limit to 2 pages (400 accounts) to prevent AI tool timeout
 
-  while (hasMore) {
+  while (hasMore && pageCount < maxPages) {
     const url = `/Accounts?fields=Account_Name,Last_Activity_Time,Modified_Time,Owner`;
     const data = await zohoApiRequest(url + (pageToken ? `&page_token=${pageToken}` : ''));
     
@@ -161,6 +163,7 @@ export async function fetchInactiveAccounts(daysInactive = 200) {
 
     if (data && data.info && data.info.more_records) {
       pageToken = data.info.next_page_token;
+      pageCount++;
     } else {
       hasMore = false;
     }
