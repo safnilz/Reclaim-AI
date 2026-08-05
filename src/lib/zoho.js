@@ -188,7 +188,8 @@ export async function fetchInactiveAccounts(daysInactive = 200) {
 }
 
 export async function searchModule(module, criteria) {
-  return zohoApiRequest(`/${module}/search?criteria=${criteria}`);
+  const encodedCriteria = encodeURIComponent(criteria);
+  return zohoApiRequest(`/${module}/search?criteria=${encodedCriteria}`);
 }
 
 // ZOHO BOOKS INTEGRATION

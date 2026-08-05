@@ -80,7 +80,7 @@ ${JSON.stringify(contextData)}`;
           parameters: z.object({
             daysInactive: z.number().default(200).describe('The number of days an account must be inactive to be included (default 200).'),
           }),
-          execute: async ({ daysInactive }) => await fetchInactiveAccounts(daysInactive),
+          execute: async ({ daysInactive }) => { try { return await fetchInactiveAccounts(daysInactive); } catch(e) { return { error: e.message }; } },
         }),
         searchCrm: tool({
           description: 'Search a Zoho CRM module for records matching criteria. For example, to find an account by name or a deal by name.',
@@ -88,22 +88,22 @@ ${JSON.stringify(contextData)}`;
             module: z.string().describe('The CRM module to search (e.g. Accounts, Contacts, Leads, Deals)'),
             criteria: z.string().describe('The search criteria string, e.g., (Account_Name:equals:Company Inc) or (Deal_Name:equals:Recova)'),
           }),
-          execute: async ({ module, criteria }) => await searchModule(module, criteria),
+          execute: async ({ module, criteria }) => { try { return await searchModule(module, criteria); } catch(e) { return { error: 'Search failed, verify criteria syntax: ' + e.message }; } },
         }),
         getCollectedRevenue: tool({
           description: 'Fetch the total collected revenue grouped by salesperson from Zoho Books.',
           parameters: z.object({ _dummy: z.boolean().optional().describe('dummy parameter') }),
-          execute: async () => await fetchCollectedRevenueBySalesperson(),
+          execute: async () => { try { return await fetchCollectedRevenueBySalesperson(); } catch(e) { return { error: e.message }; } },
         }),
         getUnpaidInvoices: tool({
           description: 'Fetch all currently unpaid invoices from Zoho Books.',
           parameters: z.object({ _dummy: z.boolean().optional().describe('dummy parameter') }),
-          execute: async () => await fetchUnpaidInvoices(),
+          execute: async () => { try { return await fetchUnpaidInvoices(); } catch(e) { return { error: e.message }; } },
         }),
         getCustomerInvoiceHistory: tool({
           description: 'Fetch the historical invoice data for all customers from Zoho Books.',
           parameters: z.object({ _dummy: z.boolean().optional().describe('dummy parameter') }),
-          execute: async () => await fetchCustomerInvoiceHistory(),
+          execute: async () => { try { return await fetchCustomerInvoiceHistory(); } catch(e) { return { error: e.message }; } },
         }),
       }
     });
