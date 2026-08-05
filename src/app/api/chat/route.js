@@ -70,7 +70,7 @@ ${JSON.stringify(contextData)}`;
     });
 
     const result = streamText({
-      model: groq('llama-3.1-8b-instant'), // Using the same model from redata
+      model: groq('llama-3.3-70b-versatile'), // Switched to 70b model for better function calling
       system: systemPrompt,
       messages: normalizedMessages,
       maxSteps: 3,
@@ -92,17 +92,17 @@ ${JSON.stringify(contextData)}`;
         }),
         getCollectedRevenue: tool({
           description: 'Fetch the total collected revenue grouped by salesperson from Zoho Books.',
-          parameters: z.object({}),
+          parameters: z.object({ _dummy: z.boolean().optional().describe('dummy parameter') }),
           execute: async () => await fetchCollectedRevenueBySalesperson(),
         }),
         getUnpaidInvoices: tool({
           description: 'Fetch all currently unpaid invoices from Zoho Books.',
-          parameters: z.object({}),
+          parameters: z.object({ _dummy: z.boolean().optional().describe('dummy parameter') }),
           execute: async () => await fetchUnpaidInvoices(),
         }),
         getCustomerInvoiceHistory: tool({
           description: 'Fetch the historical invoice data for all customers from Zoho Books.',
-          parameters: z.object({}),
+          parameters: z.object({ _dummy: z.boolean().optional().describe('dummy parameter') }),
           execute: async () => await fetchCustomerInvoiceHistory(),
         }),
       }
