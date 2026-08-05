@@ -216,8 +216,9 @@ async function _fetchAllBooksInvoices() {
     let hasMore = true;
     let page = 1;
     let allInvoices = [];
+    const maxPages = 3; // Hard limit to prevent Vercel Serverless timeout
     
-    while(hasMore) {
+    while(hasMore && page <= maxPages) {
       const invoicesUrl = `https://www.zohoapis.com/books/v3/invoices?organization_id=${booksOrgId}&page=${page}`;
       const headers = { 'Authorization': `Zoho-oauthtoken ${accessToken}` };
       // Cache this massive payload for 1 hour to prevent rate limits during forecasting

@@ -16,10 +16,33 @@ export async function POST(req) {
   try {
     const { messages } = await req.json();
 
-    // Securely fetch live CRM context behind the scenes
-    const activeDeals = await fetchAllActiveDeals();
+    // Extract user message early
+    const userMessage = messages[messages.length - 1]?.content || "";
+
+    // Run active deals fetch and intent analysis concurrently to save time
+    const [activeDeals, toolPlanResult] = await Promise.all([
+      fetchAllActiveDeals().catch(e => {
+        console.error("Failed to fetch active deals:", e);
+        return [];
+      }),
+      generateText({
+        model: groq('llama-3.1-8b-instant'), // Use 8B model for lightning fast intent analysis
+        system: `You are an intent analyzer. Analyze the user query to determine if external data from Zoho CRM or Zoho Books is required to answer.
+Output ONLY a JSON array of tool calls. Do not output markdown. Available tools:
+- {"tool": "searchCrm", "args": {"module": "Deals|Accounts|Contacts|Leads", "criteria": "..."}}
+- {"tool": "getInactiveAccounts", "args": {"daysInactive": 200}}
+- {"tool": "getCollectedRevenue", "args": {}}
+- {"tool": "getUnpaidInvoices", "args": {}}
+- {"tool": "getCustomerInvoiceHistory", "args": {}}
+If no tools are needed, output []. ONLY output a valid JSON array.`,
+        prompt: userMessage,
+      }).catch(e => {
+        console.error("Intent analyzer failed:", e);
+        return { text: "[]" };
+      })
+    ]);
     
-    // Compute summary metrics to avoid passing 300+ deals to the LLM (which exceeds 6k TPM limit)
+    // Compute summary metrics to avoid passing 300+ deals to the LLM
     const totalDeals = activeDeals.length;
     const totalRevenue = activeDeals.reduce((sum, d) => sum + (Number(d.expectedRevenue) || 0), 0);
     const dealsByStage = activeDeals.reduce((acc, d) => {
@@ -48,45 +71,34 @@ export async function POST(req) {
     // Pre-process user intent to determine if we need to call external tools
     let additionalContext = "";
     try {
-      const userMessage = messages[messages.length - 1]?.content || "";
-      
-      const { text: toolPlan } = await generateText({
-        model: groq('llama-3.3-70b-versatile'),
-        system: `You are an intent analyzer. Analyze the user query to determine if external data from Zoho CRM or Zoho Books is required to answer.
-Output ONLY a JSON array of tool calls. Do not output markdown. Available tools:
-- {"tool": "searchCrm", "args": {"module": "Deals|Accounts|Contacts|Leads", "criteria": "..."}}
-- {"tool": "getInactiveAccounts", "args": {"daysInactive": 200}}
-- {"tool": "getCollectedRevenue", "args": {}}
-- {"tool": "getUnpaidInvoices", "args": {}}
-- {"tool": "getCustomerInvoiceHistory", "args": {}}
-If no tools are needed, output []. ONLY output a valid JSON array.`,
-        prompt: userMessage,
-      });
-
-      const jsonMatch = toolPlan.match(/\[.*\]/s);
+      const jsonMatch = toolPlanResult.text.match(/\[.*\]/s);
       if (jsonMatch) {
         const toolCalls = JSON.parse(jsonMatch[0]);
         for (const call of toolCalls) {
-          if (call.tool === 'searchCrm') {
-            const res = await searchModule(call.args.module, call.args.criteria);
-            additionalContext += `\n[Tool searchCrm (${call.args.module} - ${call.args.criteria}) result]: ${JSON.stringify(res)}`;
-          } else if (call.tool === 'getInactiveAccounts') {
-            const res = await fetchInactiveAccounts(call.args.daysInactive || 200);
-            additionalContext += `\n[Tool getInactiveAccounts result]: ${JSON.stringify(res)}`;
-          } else if (call.tool === 'getCollectedRevenue') {
-            const res = await fetchCollectedRevenueBySalesperson();
-            additionalContext += `\n[Tool getCollectedRevenue result]: ${JSON.stringify(res)}`;
-          } else if (call.tool === 'getUnpaidInvoices') {
-            const res = await fetchUnpaidInvoices();
-            additionalContext += `\n[Tool getUnpaidInvoices result]: ${JSON.stringify(res)}`;
-          } else if (call.tool === 'getCustomerInvoiceHistory') {
-            const res = await fetchCustomerInvoiceHistory();
-            additionalContext += `\n[Tool getCustomerInvoiceHistory result]: ${JSON.stringify(res)}`;
+          try {
+            if (call.tool === 'searchCrm') {
+              const res = await searchModule(call.args.module, call.args.criteria);
+              additionalContext += `\n[Tool searchCrm (${call.args.module} - ${call.args.criteria}) result]: ${JSON.stringify(res)}`;
+            } else if (call.tool === 'getInactiveAccounts') {
+              const res = await fetchInactiveAccounts(call.args.daysInactive || 200);
+              additionalContext += `\n[Tool getInactiveAccounts result]: ${JSON.stringify(res)}`;
+            } else if (call.tool === 'getCollectedRevenue') {
+              const res = await fetchCollectedRevenueBySalesperson();
+              additionalContext += `\n[Tool getCollectedRevenue result]: ${JSON.stringify(res)}`;
+            } else if (call.tool === 'getUnpaidInvoices') {
+              const res = await fetchUnpaidInvoices();
+              additionalContext += `\n[Tool getUnpaidInvoices result]: ${JSON.stringify(res)}`;
+            } else if (call.tool === 'getCustomerInvoiceHistory') {
+              const res = await fetchCustomerInvoiceHistory();
+              additionalContext += `\n[Tool getCustomerInvoiceHistory result]: ${JSON.stringify(res)}`;
+            }
+          } catch(toolErr) {
+            additionalContext += `\n[Tool ${call.tool} failed]: ${toolErr.message}`;
           }
         }
       }
     } catch (e) {
-      console.log("Pre-processing tool step failed:", e);
+      console.log("Pre-processing tool step parsing failed:", e);
     }
 
     // Inject the real-time context and any tool results into the system prompt
