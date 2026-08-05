@@ -108,7 +108,7 @@ ${JSON.stringify(contextData)}`;
       }
     });
 
-    return result.toDataStreamResponse();
+    return result.toUIMessageStreamResponse();
   } catch (error) {
     console.error("AI Assistant Error:", error);
     return new Response(
