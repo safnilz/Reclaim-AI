@@ -1,6 +1,7 @@
 import { groq } from '@ai-sdk/groq';
 import { streamText, generateText } from 'ai';
 import { z } from 'zod';
+import { PrismaClient } from '@prisma/client';
 import { 
   fetchAllActiveDeals, 
   fetchInactiveAccounts,
@@ -9,6 +10,8 @@ import {
   fetchUnpaidInvoices,
   fetchCustomerInvoiceHistory
 } from '@/lib/zoho';
+
+const prisma = new PrismaClient();
 
 export const maxDuration = 30;
 
@@ -19,21 +22,26 @@ export async function POST(req) {
     // Extract user message early
     const userMessage = messages[messages.length - 1]?.content || "";
 
-    // Run active deals fetch and intent analysis concurrently to save time
-    const [activeDeals, toolPlanResult] = await Promise.all([
+    // Run active deals fetch, learned facts fetch, and intent analysis concurrently to save time
+    const [activeDeals, learnedFacts, toolPlanResult] = await Promise.all([
       fetchAllActiveDeals().catch(e => {
         console.error("Failed to fetch active deals:", e);
         return [];
       }),
+      prisma.learnedFact.findMany().catch(e => {
+        console.error("Failed to fetch learned facts:", e);
+        return [];
+      }),
       generateText({
         model: groq('llama-3.1-8b-instant'), // Use 8B model for lightning fast intent analysis
-        system: `You are an intent analyzer. Analyze the user query to determine if external data from Zoho CRM or Zoho Books is required to answer.
+        system: `You are an intent analyzer. Analyze the user query to determine if external data from Zoho CRM or Zoho Books is required to answer, OR if the user is explicitly telling you to remember/learn a fact.
 Output ONLY a JSON array of tool calls. Do not output markdown. Available tools:
 - {"tool": "searchCrm", "args": {"module": "Deals|Accounts|Contacts|Leads", "criteria": "..."}}
 - {"tool": "getInactiveAccounts", "args": {"daysInactive": 200}}
 - {"tool": "getCollectedRevenue", "args": {}}
 - {"tool": "getUnpaidInvoices", "args": {}}
 - {"tool": "getCustomerInvoiceHistory", "args": {}}
+- {"tool": "learnFact", "args": {"fact": "the specific fact to remember"}}
 If no tools are needed, output []. ONLY output a valid JSON array.`,
         prompt: userMessage,
       }).catch(e => {
@@ -91,6 +99,14 @@ If no tools are needed, output []. ONLY output a valid JSON array.`,
             } else if (call.tool === 'getCustomerInvoiceHistory') {
               const res = await fetchCustomerInvoiceHistory();
               additionalContext += `\n[Tool getCustomerInvoiceHistory result]: ${JSON.stringify(res)}`;
+            } else if (call.tool === 'learnFact') {
+              const fact = call.args.fact;
+              if (fact) {
+                await prisma.learnedFact.create({ data: { fact } });
+                additionalContext += `\n[Tool learnFact result]: I have memorized this fact: "${fact}". Please acknowledge this to the user.`;
+                // Add the newly learned fact to the current array immediately so it is included in context
+                learnedFacts.push({ fact }); 
+              }
             }
           } catch(toolErr) {
             additionalContext += `\n[Tool ${call.tool} failed]: ${toolErr.message}`;
@@ -101,14 +117,21 @@ If no tools are needed, output []. ONLY output a valid JSON array.`,
       console.log("Pre-processing tool step parsing failed:", e);
     }
 
+    const factsString = learnedFacts.length > 0 
+      ? learnedFacts.map(f => `- ${f.fact}`).join('\n') 
+      : "No learned facts yet.";
+
     // Inject the real-time context and any tool results into the system prompt
     const systemPrompt = `You are the AI Commercial Director of Ehfaaz.
-Your job is to answer the user's questions based on live CRM and Accounting data.
+Your job is to answer the user's questions based on live CRM and Accounting data, and dynamically adapt based on Learned Facts.
 
 For pipeline and deal questions, rely on the LIVE ZOHO CRM PIPELINE DATA provided below, which contains summary metrics and the top 50 active deals.
 For specific deep-dive questions, relevant tool output has been dynamically fetched and injected below.
 
 Be concise, assertive, and focus on commercial outcomes, pipeline health, and missing data.
+
+LEARNED COMPANY CONTEXT (Important facts to remember):
+${factsString}
 
 LIVE ZOHO CRM PIPELINE DATA:
 ${JSON.stringify(contextData)}

@@ -29,3 +29,9 @@ model UserSettings {
   value         String
   updatedAt     DateTime @updatedAt
 }
+
+model LearnedFact {
+  id        String   @id @default(cuid())
+  fact      String
+  createdAt DateTime @default(now())
+}
