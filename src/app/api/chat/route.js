@@ -1,6 +1,14 @@
 import { groq } from '@ai-sdk/groq';
-import { streamText } from 'ai';
-import { fetchAllActiveDeals } from '@/lib/zoho';
+import { streamText, tool } from 'ai';
+import { z } from 'zod';
+import { 
+  fetchAllActiveDeals, 
+  fetchInactiveAccounts,
+  searchModule,
+  fetchCollectedRevenueBySalesperson,
+  fetchUnpaidInvoices,
+  fetchCustomerInvoiceHistory
+} from '@/lib/zoho';
 
 export const maxDuration = 30;
 
@@ -39,7 +47,11 @@ export async function POST(req) {
 
     // Inject the real-time context into the system prompt
     const systemPrompt = `You are the AI Commercial Director of Ehfaaz.
-Your job is to answer the user's questions strictly based on the live Zoho CRM data provided below.
+Your job is to answer the user's questions based on live CRM and Accounting data.
+
+For pipeline and deal questions, rely on the LIVE ZOHO CRM PIPELINE DATA provided below, which contains summary metrics and the top 50 active deals.
+If the user asks about inactive accounts, search for other CRM modules, or asks about invoices and revenue collected, you MUST use the provided tools to fetch that data dynamically.
+
 Be concise, assertive, and focus on commercial outcomes, pipeline health, and missing data.
 
 LIVE ZOHO CRM PIPELINE DATA:
@@ -61,9 +73,42 @@ ${JSON.stringify(contextData)}`;
       model: groq('llama-3.1-8b-instant'), // Using the same model from redata
       system: systemPrompt,
       messages: normalizedMessages,
+      maxSteps: 3,
+      tools: {
+        getInactiveAccounts: tool({
+          description: 'Fetch accounts that have had no activity for a specified number of days.',
+          parameters: z.object({
+            daysInactive: z.number().default(200).describe('The number of days an account must be inactive to be included (default 200).'),
+          }),
+          execute: async ({ daysInactive }) => await fetchInactiveAccounts(daysInactive),
+        }),
+        searchCrm: tool({
+          description: 'Search a Zoho CRM module for records matching criteria. For example, to find an account by name.',
+          parameters: z.object({
+            module: z.enum(['Accounts', 'Contacts', 'Leads']).describe('The CRM module to search'),
+            criteria: z.string().describe('The search criteria string, e.g., (Account_Name:equals:Company Inc)'),
+          }),
+          execute: async ({ module, criteria }) => await searchModule(module, criteria),
+        }),
+        getCollectedRevenue: tool({
+          description: 'Fetch the total collected revenue grouped by salesperson from Zoho Books.',
+          parameters: z.object({}),
+          execute: async () => await fetchCollectedRevenueBySalesperson(),
+        }),
+        getUnpaidInvoices: tool({
+          description: 'Fetch all currently unpaid invoices from Zoho Books.',
+          parameters: z.object({}),
+          execute: async () => await fetchUnpaidInvoices(),
+        }),
+        getCustomerInvoiceHistory: tool({
+          description: 'Fetch the historical invoice data for all customers from Zoho Books.',
+          parameters: z.object({}),
+          execute: async () => await fetchCustomerInvoiceHistory(),
+        }),
+      }
     });
 
-    return result.toUIMessageStreamResponse();
+    return result.toDataStreamResponse();
   } catch (error) {
     console.error("AI Assistant Error:", error);
     return new Response(

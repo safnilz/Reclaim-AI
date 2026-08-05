@@ -146,6 +146,44 @@ export async function fetchAllActiveDeals(includeClosed = false) {
   }));
 }
 
+export async function fetchInactiveAccounts(daysInactive = 200) {
+  let allAccounts = [];
+  let pageToken = null;
+  let hasMore = true;
+
+  while (hasMore) {
+    const url = `/Accounts?fields=Account_Name,Last_Activity_Time,Modified_Time,Owner`;
+    const data = await zohoApiRequest(url + (pageToken ? `&page_token=${pageToken}` : ''));
+    
+    if (data && data.data) {
+      allAccounts = allAccounts.concat(data.data);
+    }
+
+    if (data && data.info && data.info.more_records) {
+      pageToken = data.info.next_page_token;
+    } else {
+      hasMore = false;
+    }
+  }
+
+  const cutoffDate = new Date();
+  cutoffDate.setDate(cutoffDate.getDate() - daysInactive);
+
+  const inactiveAccounts = allAccounts.filter(acc => {
+    const lastActivity = acc.Last_Activity_Time ? new Date(acc.Last_Activity_Time) : 
+                         (acc.Modified_Time ? new Date(acc.Modified_Time) : new Date(0));
+    return lastActivity < cutoffDate;
+  });
+
+  return inactiveAccounts.map(acc => ({
+    id: acc.id,
+    name: acc.Account_Name,
+    owner: acc.Owner ? acc.Owner.name : 'Unknown',
+    lastActivityTime: acc.Last_Activity_Time || 'No Activity',
+    modifiedTime: acc.Modified_Time || 'Unknown'
+  }));
+}
+
 export async function searchModule(module, criteria) {
   return zohoApiRequest(`/${module}/search?criteria=${criteria}`);
 }
