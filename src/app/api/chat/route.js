@@ -1,5 +1,5 @@
 import { groq } from '@ai-sdk/groq';
-import { streamText, tool } from 'ai';
+import { streamText, generateText } from 'ai';
 import { z } from 'zod';
 import { 
   fetchAllActiveDeals, 
@@ -45,17 +45,64 @@ export async function POST(req) {
       top50LargestDeals: topDeals
     };
 
-    // Inject the real-time context into the system prompt
+    // Pre-process user intent to determine if we need to call external tools
+    let additionalContext = "";
+    try {
+      const userMessage = messages[messages.length - 1]?.content || "";
+      
+      const { text: toolPlan } = await generateText({
+        model: groq('llama-3.3-70b-versatile'),
+        system: `You are an intent analyzer. Analyze the user query to determine if external data from Zoho CRM or Zoho Books is required to answer.
+Output ONLY a JSON array of tool calls. Do not output markdown. Available tools:
+- {"tool": "searchCrm", "args": {"module": "Deals|Accounts|Contacts|Leads", "criteria": "..."}}
+- {"tool": "getInactiveAccounts", "args": {"daysInactive": 200}}
+- {"tool": "getCollectedRevenue", "args": {}}
+- {"tool": "getUnpaidInvoices", "args": {}}
+- {"tool": "getCustomerInvoiceHistory", "args": {}}
+If no tools are needed, output []. ONLY output a valid JSON array.`,
+        prompt: userMessage,
+      });
+
+      const jsonMatch = toolPlan.match(/\[.*\]/s);
+      if (jsonMatch) {
+        const toolCalls = JSON.parse(jsonMatch[0]);
+        for (const call of toolCalls) {
+          if (call.tool === 'searchCrm') {
+            const res = await searchModule(call.args.module, call.args.criteria);
+            additionalContext += `\n[Tool searchCrm (${call.args.module} - ${call.args.criteria}) result]: ${JSON.stringify(res)}`;
+          } else if (call.tool === 'getInactiveAccounts') {
+            const res = await fetchInactiveAccounts(call.args.daysInactive || 200);
+            additionalContext += `\n[Tool getInactiveAccounts result]: ${JSON.stringify(res)}`;
+          } else if (call.tool === 'getCollectedRevenue') {
+            const res = await fetchCollectedRevenueBySalesperson();
+            additionalContext += `\n[Tool getCollectedRevenue result]: ${JSON.stringify(res)}`;
+          } else if (call.tool === 'getUnpaidInvoices') {
+            const res = await fetchUnpaidInvoices();
+            additionalContext += `\n[Tool getUnpaidInvoices result]: ${JSON.stringify(res)}`;
+          } else if (call.tool === 'getCustomerInvoiceHistory') {
+            const res = await fetchCustomerInvoiceHistory();
+            additionalContext += `\n[Tool getCustomerInvoiceHistory result]: ${JSON.stringify(res)}`;
+          }
+        }
+      }
+    } catch (e) {
+      console.log("Pre-processing tool step failed:", e);
+    }
+
+    // Inject the real-time context and any tool results into the system prompt
     const systemPrompt = `You are the AI Commercial Director of Ehfaaz.
 Your job is to answer the user's questions based on live CRM and Accounting data.
 
 For pipeline and deal questions, rely on the LIVE ZOHO CRM PIPELINE DATA provided below, which contains summary metrics and the top 50 active deals.
-If the user asks about inactive accounts, search for other CRM modules, or asks about invoices and revenue collected, you MUST use the provided tools to fetch that data dynamically.
+For specific deep-dive questions, relevant tool output has been dynamically fetched and injected below.
 
 Be concise, assertive, and focus on commercial outcomes, pipeline health, and missing data.
 
 LIVE ZOHO CRM PIPELINE DATA:
-${JSON.stringify(contextData)}`;
+${JSON.stringify(contextData)}
+
+ADDITIONAL DYNAMIC CONTEXT (If any):
+${additionalContext}`;
 
     // The AI SDK client sends 'parts' for assistant messages when using toUIMessageStreamResponse.
     // The AI provider requires 'content' to be a string. We must normalize this to prevent validation errors.
@@ -70,42 +117,10 @@ ${JSON.stringify(contextData)}`;
     });
 
     const result = streamText({
-      model: groq('llama-3.3-70b-versatile'), // Switched to 70b model for better function calling
+      model: groq('llama-3.3-70b-versatile'), // Switched to 70b model for better reasoning
       system: systemPrompt,
       messages: normalizedMessages,
-      maxSteps: 3,
-      tools: {
-        getInactiveAccounts: tool({
-          description: 'Fetch accounts that have had no activity for a specified number of days.',
-          parameters: z.object({
-            daysInactive: z.number().default(200).describe('The number of days an account must be inactive to be included (default 200).'),
-          }),
-          execute: async ({ daysInactive }) => { try { return await fetchInactiveAccounts(daysInactive); } catch(e) { return { error: e.message }; } },
-        }),
-        searchCrm: tool({
-          description: 'Search a Zoho CRM module for records matching criteria. For example, to find an account by name or a deal by name.',
-          parameters: z.object({
-            module: z.string().describe('The CRM module to search (e.g. Accounts, Contacts, Leads, Deals)'),
-            criteria: z.string().describe('The search criteria string, e.g., (Account_Name:equals:Company Inc) or (Deal_Name:equals:Recova)'),
-          }),
-          execute: async ({ module, criteria }) => { try { return await searchModule(module, criteria); } catch(e) { return { error: 'Search failed, verify criteria syntax: ' + e.message }; } },
-        }),
-        getCollectedRevenue: tool({
-          description: 'Fetch the total collected revenue grouped by salesperson from Zoho Books.',
-          parameters: z.object({ _dummy: z.boolean().optional().describe('dummy parameter') }),
-          execute: async () => { try { return await fetchCollectedRevenueBySalesperson(); } catch(e) { return { error: e.message }; } },
-        }),
-        getUnpaidInvoices: tool({
-          description: 'Fetch all currently unpaid invoices from Zoho Books.',
-          parameters: z.object({ _dummy: z.boolean().optional().describe('dummy parameter') }),
-          execute: async () => { try { return await fetchUnpaidInvoices(); } catch(e) { return { error: e.message }; } },
-        }),
-        getCustomerInvoiceHistory: tool({
-          description: 'Fetch the historical invoice data for all customers from Zoho Books.',
-          parameters: z.object({ _dummy: z.boolean().optional().describe('dummy parameter') }),
-          execute: async () => { try { return await fetchCustomerInvoiceHistory(); } catch(e) { return { error: e.message }; } },
-        }),
-      }
+      maxSteps: 1
     });
 
     return result.toUIMessageStreamResponse();
