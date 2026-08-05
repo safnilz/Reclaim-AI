@@ -4,6 +4,7 @@ import {
   CheckSquare, Calendar, Target, TrendingUp, 
   Settings, Users, Briefcase, FileText
 } from 'lucide-react';
+import LogoutButton from './LogoutButton';
 
 const navigation = [
   { name: 'Command Centre', href: '/', icon: LayoutDashboard },
@@ -50,6 +51,7 @@ export default function Sidebar() {
             <p className="text-sm font-medium text-slate-900">Management View</p>
             <p className="text-xs text-slate-500">Live CRM Data</p>
           </div>
+          <LogoutButton />
         </div>
       </div>
     </div>
