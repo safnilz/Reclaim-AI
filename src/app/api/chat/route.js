@@ -34,7 +34,7 @@ export async function POST(req) {
       }),
       generateText({
         model: groq('llama-3.1-8b-instant'), // Use 8B model for lightning fast intent analysis
-        system: `You are an intent analyzer. Analyze the user query to determine if external data from Zoho CRM or Zoho Books is required to answer, OR if the user is explicitly telling you to remember/learn a fact.
+        system: `You are an intent analyzer. Analyze the user query to determine if external data from Zoho CRM or Zoho Books is required to answer, OR if the user is explicitly telling you to remember/learn a fact, or sharing general company knowledge with you (e.g. who works where, company policies, competitors).
 Output ONLY a JSON array of tool calls. Do not output markdown. Available tools:
 - {"tool": "searchCrm", "args": {"module": "Deals|Accounts|Contacts|Leads", "criteria": "..."}}
 - {"tool": "getInactiveAccounts", "args": {"daysInactive": 200}}
@@ -42,7 +42,7 @@ Output ONLY a JSON array of tool calls. Do not output markdown. Available tools:
 - {"tool": "getUnpaidInvoices", "args": {}}
 - {"tool": "getCustomerInvoiceHistory", "args": {}}
 - {"tool": "learnFact", "args": {"fact": "the specific fact to remember"}}
-If no tools are needed, output []. ONLY output a valid JSON array.`,
+If the user shares company knowledge or tells you to remember something, output a learnFact tool call. If no tools are needed, output []. ONLY output a valid JSON array.`,
         prompt: userMessage,
       }).catch(e => {
         console.error("Intent analyzer failed:", e);
