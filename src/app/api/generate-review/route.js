@@ -8,17 +8,32 @@ export const maxDuration = 30;
 
 export async function POST(req) {
   try {
-    const { salespersonId, salespersonName, deals } = await req.json();
+    const { 
+      salespersonId, 
+      salespersonName, 
+      deals,
+      wonThisWeekValue = 0,
+      collectedThisWeek = 0,
+      hygieneScore = 100,
+      hygieneIssues = 0
+    } = await req.json();
 
-    if (!salespersonId) {
-      return new Response(JSON.stringify({ error: "salespersonId is required" }), { status: 400 });
+    if (!salespersonName) {
+      return new Response(JSON.stringify({ error: "salespersonName is required" }), { status: 400 });
     }
 
     const systemPrompt = `You are a strict, data-driven Commercial Director preparing for a weekly 1-on-1 with your salesperson, ${salespersonName}.
+Here is their performance for THIS WEEK:
+- Deals Won Value: ${wonThisWeekValue}
+- Revenue Collected: ${collectedThisWeek}
+- CRM Hygiene Score: ${hygieneScore}% (${hygieneIssues} active deals with missing or overdue next steps)
+
 Here is their current active pipeline from Zoho CRM:
 ${JSON.stringify(deals, null, 2)}
 
-Analyze this pipeline. Look for:
+Analyze this pipeline and their weekly performance. Look for:
+- If they haven't closed much or collected revenue this week, ask them why.
+- If their CRM hygiene is poor, press them on maintaining accurate data.
 - High value deals that are stuck (stale)
 - Deals missing mandatory data
 - Opportunities that should be closing soon but haven't moved

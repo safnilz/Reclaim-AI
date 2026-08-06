@@ -299,3 +299,32 @@ export async function fetchCustomerInvoiceHistory() {
   
   return Object.values(customerHistory);
 }
+
+export async function fetchCollectedRevenueThisWeekBySalesperson() {
+  const allInvoices = await _fetchAllBooksInvoices();
+  
+  // Date logic for "This week" (Monday to Sunday)
+  const today = new Date();
+  const dayOfWeek = today.getDay() || 7; // Convert Sunday(0) to 7
+  const monday = new Date(today);
+  monday.setDate(today.getDate() - dayOfWeek + 1);
+  monday.setHours(0, 0, 0, 0);
+
+  const collectedBySalesperson = {};
+  allInvoices.forEach(inv => {
+    if (!inv.date) return;
+    const invDate = new Date(inv.date);
+    if (invDate >= monday) {
+      const sp = inv.salesperson_name || 'Unknown';
+      const collected = (inv.total || 0) - (inv.balance || 0);
+      if (collected > 0) {
+        if (!collectedBySalesperson[sp]) {
+          collectedBySalesperson[sp] = 0;
+        }
+        collectedBySalesperson[sp] += collected;
+      }
+    }
+  });
+  
+  return collectedBySalesperson;
+}

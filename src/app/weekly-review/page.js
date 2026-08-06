@@ -1,27 +1,66 @@
-import { fetchAllActiveDeals } from '@/lib/zoho';
+import { fetchAllActiveDeals, fetchCollectedRevenueThisWeekBySalesperson } from '@/lib/zoho';
 import { PrismaClient } from '@prisma/client';
 import WeeklyReviewClient from './WeeklyReviewClient';
 
 const prisma = new PrismaClient();
 
 export default async function WeeklyReviewPage() {
-  const opportunities = await fetchAllActiveDeals();
+  const allOpportunities = await fetchAllActiveDeals(true);
+  const collectedThisWeek = await fetchCollectedRevenueThisWeekBySalesperson();
+  
+  const today = new Date();
+  const dayOfWeek = today.getDay() || 7;
+  const monday = new Date(today);
+  monday.setDate(today.getDate() - dayOfWeek + 1);
+  monday.setHours(0, 0, 0, 0);
   
   // Group opportunities by salesperson
   const salesTeam = {};
   let totalPipeline = 0;
 
-  opportunities.forEach(opp => {
+  allOpportunities.forEach(opp => {
     if (!salesTeam[opp.ownerId]) {
       salesTeam[opp.ownerId] = {
         name: opp.ownerId,
         deals: [],
-        totalValue: 0
+        totalValue: 0,
+        wonThisWeekCount: 0,
+        wonThisWeekValue: 0,
+        hygieneIssues: 0,
+        totalActiveDeals: 0
       };
     }
-    salesTeam[opp.ownerId].deals.push(opp);
-    salesTeam[opp.ownerId].totalValue += opp.expectedRevenue;
-    totalPipeline += opp.expectedRevenue;
+    
+    const isClosedWon = opp.stage === 'Closed Won' || opp.stage === 'Revenue Collected' || opp.stage === 'Job Completed';
+    const isClosedLost = opp.stage === 'Closed Lost' || opp.stage === 'Closed - Lost to Competitor';
+    
+    if (isClosedWon) {
+      if (opp.closeDate && new Date(opp.closeDate) >= monday) {
+        salesTeam[opp.ownerId].wonThisWeekCount += 1;
+        salesTeam[opp.ownerId].wonThisWeekValue += (opp.expectedRevenue || 0);
+      }
+    } else if (!isClosedLost) {
+      // It's an active deal
+      salesTeam[opp.ownerId].deals.push(opp);
+      salesTeam[opp.ownerId].totalValue += (opp.expectedRevenue || 0);
+      salesTeam[opp.ownerId].totalActiveDeals += 1;
+      totalPipeline += (opp.expectedRevenue || 0);
+      
+      // Check CRM Hygiene
+      let hasIssue = false;
+      if (!opp.nextAction) hasIssue = true; // Missing Next Step
+      else if (opp.nextActionDate && new Date(opp.nextActionDate) < today) hasIssue = true; // Overdue Next Step
+      else {
+        // Stale deal: no updates in 14 days
+        const lastUpdated = opp.lastUpdated ? new Date(opp.lastUpdated) : new Date(0);
+        const diffDays = Math.floor((today - lastUpdated) / (1000 * 60 * 60 * 24));
+        if (diffDays > 14) hasIssue = true;
+      }
+      
+      if (hasIssue) {
+        salesTeam[opp.ownerId].hygieneIssues += 1;
+      }
+    }
   });
 
   // Fetch saved reviews from database
@@ -38,9 +77,16 @@ export default async function WeeklyReviewPage() {
         questions = JSON.parse(latestReview.reviewContent);
       } catch (e) {}
     }
+    
+    const hygieneScore = person.totalActiveDeals > 0 
+      ? Math.round(((person.totalActiveDeals - person.hygieneIssues) / person.totalActiveDeals) * 100) 
+      : 100;
+      
     return {
       ...person,
       percentageOfPipeline: Math.round((person.totalValue / (totalPipeline || 1)) * 100),
+      collectedThisWeek: collectedThisWeek[person.name] || 0,
+      hygieneScore,
       savedQuestions: questions
     };
   }).sort((a, b) => b.totalValue - a.totalValue);

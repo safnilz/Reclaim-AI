@@ -137,7 +137,7 @@ export default async function TargetsPage() {
       <div className="bg-white border border-slate-200 rounded-xl p-8 shadow-sm">
         <h2 className="text-xl font-bold text-slate-900 mb-6 flex items-center gap-2">
           <TrendingUp className="w-5 h-5 text-emerald-500" />
-          Company Required Run Rate
+          Company Target Velocity
         </h2>
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-6">
           <div className="bg-gradient-to-br from-slate-50 to-slate-100 border border-slate-200 rounded-xl p-4 shadow-sm">
@@ -205,12 +205,12 @@ export default async function TargetsPage() {
               </div>
             </div>
 
-            {/* Run Rate Section */}
+            {/* Velocity Section */}
             <div className="mt-6 pt-5 border-t border-slate-100">
               <div className="flex items-center justify-between mb-4">
                 <h4 className="text-sm font-bold text-slate-800 flex items-center gap-2">
                   <TrendingUp className="w-4 h-4 text-emerald-500" />
-                  Required Run Rate
+                  Target Velocity
                 </h4>
                 <span className="text-xs font-medium text-slate-500 bg-slate-100 px-2 py-1 rounded-md">
                   Remaining: {formatCurrency(person.runRates.remainingTarget)}

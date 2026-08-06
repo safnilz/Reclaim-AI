@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from 'react';
-import { FileText, Download, CheckSquare, Loader2, Bot } from 'lucide-react';
+import { FileText, Download, CheckSquare, Loader2, Bot, Trophy, Banknote, ShieldAlert } from 'lucide-react';
 import { formatCurrency } from '@/lib/utils';
 
 export default function WeeklyReviewClient({ teamArray }) {
@@ -16,7 +16,11 @@ export default function WeeklyReviewClient({ teamArray }) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           salespersonName: person.name,
-          deals: person.deals
+          deals: person.deals,
+          wonThisWeekValue: person.wonThisWeekValue,
+          collectedThisWeek: person.collectedThisWeek,
+          hygieneScore: person.hygieneScore,
+          hygieneIssues: person.hygieneIssues
         })
       });
       const data = await res.json();
@@ -65,6 +69,41 @@ export default function WeeklyReviewClient({ teamArray }) {
                       <div className="bg-emerald-500 h-2 rounded-full" style={{ width: `${person.percentageOfPipeline}%` }}></div>
                     </div>
                   </div>
+                </div>
+              </div>
+              
+              {/* NEW: Weekly Snapshot */}
+              <div className="grid grid-cols-3 border-b border-slate-200 divide-x divide-slate-200 bg-slate-50/50">
+                <div className="p-4 flex flex-col items-center justify-center text-center">
+                  <div className="flex items-center gap-1.5 text-amber-500 font-bold text-sm mb-1">
+                    <Trophy className="w-4 h-4" /> Won This Week
+                  </div>
+                  <p className="text-xl font-bold text-slate-900">{formatCurrency(person.wonThisWeekValue)}</p>
+                  <p className="text-xs text-slate-500 mt-0.5">{person.wonThisWeekCount} deals closed</p>
+                </div>
+                
+                <div className="p-4 flex flex-col items-center justify-center text-center">
+                  <div className="flex items-center gap-1.5 text-emerald-500 font-bold text-sm mb-1">
+                    <Banknote className="w-4 h-4" /> Collected This Week
+                  </div>
+                  <p className="text-xl font-bold text-slate-900">{formatCurrency(person.collectedThisWeek)}</p>
+                </div>
+
+                <div className="p-4 flex flex-col items-center justify-center text-center">
+                  <div className="flex items-center gap-1.5 text-blue-500 font-bold text-sm mb-1">
+                    <ShieldAlert className="w-4 h-4" /> CRM Hygiene
+                  </div>
+                  <div className="flex items-center gap-2 mt-1 w-full justify-center">
+                    <div className="w-24 bg-slate-200 rounded-full h-2">
+                      <div 
+                        className={`h-2 rounded-full ${person.hygieneScore >= 80 ? 'bg-emerald-500' : person.hygieneScore >= 50 ? 'bg-amber-400' : 'bg-red-500'}`} 
+                        style={{ width: `${person.hygieneScore}%` }}></div>
+                    </div>
+                    <span className={`text-lg font-bold ${person.hygieneScore >= 80 ? 'text-emerald-500' : person.hygieneScore >= 50 ? 'text-amber-500' : 'text-red-500'}`}>
+                      {person.hygieneScore}%
+                    </span>
+                  </div>
+                  <p className="text-xs text-slate-500 mt-1">{person.hygieneIssues} active deals with issues</p>
                 </div>
               </div>
               
