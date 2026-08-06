@@ -1,4 +1,4 @@
-import { fetchAllActiveDeals, fetchCollectedRevenueThisWeekBySalesperson } from '@/lib/zoho';
+import { fetchAllActiveDeals, fetchCollectedRevenueThisWeekBySalesperson, fetchWeeklyUtilization } from '@/lib/zoho';
 import { calculateHygieneScore } from '@/lib/logic';
 import { PrismaClient } from '@prisma/client';
 import WeeklyReviewClient from './WeeklyReviewClient';
@@ -8,6 +8,7 @@ const prisma = new PrismaClient();
 export default async function WeeklyReviewPage() {
   const allOpportunities = await fetchAllActiveDeals(true);
   const collectedThisWeek = await fetchCollectedRevenueThisWeekBySalesperson();
+  const utilizationThisWeek = await fetchWeeklyUtilization();
   
   const today = new Date();
   const dayOfWeek = today.getDay() || 7;
@@ -27,11 +28,23 @@ export default async function WeeklyReviewPage() {
         totalValue: 0,
         wonThisWeekCount: 0,
         wonThisWeekValue: 0,
+        createdThisWeekCount: 0,
+        createdThisWeekValue: 0,
+        progressedThisWeekCount: 0,
         hygieneIssues: 0,
         totalActiveDeals: 0
       };
     }
     
+    if (opp.createdTime && new Date(opp.createdTime) >= monday) {
+      salesTeam[opp.ownerId].createdThisWeekCount += 1;
+      salesTeam[opp.ownerId].createdThisWeekValue += (opp.expectedRevenue || 0);
+    }
+    
+    if (opp.lastUpdated && new Date(opp.lastUpdated) >= monday) {
+      salesTeam[opp.ownerId].progressedThisWeekCount += 1;
+    }
+
     const isClosedWon = opp.stage === 'Closed Won' || opp.stage === 'Revenue Collected' || opp.stage === 'Job Completed';
     const isClosedLost = opp.stage === 'Closed Lost' || opp.stage === 'Closed - Lost to Competitor';
     
@@ -79,6 +92,7 @@ export default async function WeeklyReviewPage() {
       ...person,
       percentageOfPipeline: Math.round((person.totalValue / (totalPipeline || 1)) * 100),
       collectedThisWeek: collectedThisWeek[person.name] || 0,
+      utilization: utilizationThisWeek[person.name] || { tasks: 0, calls: 0 },
       hygieneScore,
       savedQuestions: questions
     };

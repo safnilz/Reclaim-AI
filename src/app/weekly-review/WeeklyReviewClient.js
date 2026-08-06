@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from 'react';
-import { FileText, Download, CheckSquare, Loader2, Bot, Trophy, Banknote, ShieldAlert } from 'lucide-react';
+import { FileText, Download, CheckSquare, Loader2, Bot, Trophy, Banknote, ShieldAlert, PhoneCall, PlusCircle, ArrowRight } from 'lucide-react';
 import { formatCurrency } from '@/lib/utils';
 
 export default function WeeklyReviewClient({ teamArray }) {
@@ -19,6 +19,11 @@ export default function WeeklyReviewClient({ teamArray }) {
           deals: person.deals,
           wonThisWeekValue: person.wonThisWeekValue,
           collectedThisWeek: person.collectedThisWeek,
+          createdThisWeekCount: person.createdThisWeekCount,
+          createdThisWeekValue: person.createdThisWeekValue,
+          progressedThisWeekCount: person.progressedThisWeekCount,
+          tasksCompleted: person.utilization.tasks,
+          callsLogged: person.utilization.calls,
           hygieneScore: person.hygieneScore,
           hygieneIssues: person.hygieneIssues
         })
@@ -73,37 +78,64 @@ export default function WeeklyReviewClient({ teamArray }) {
               </div>
               
               {/* NEW: Weekly Snapshot */}
-              <div className="grid grid-cols-3 border-b border-slate-200 divide-x divide-slate-200 bg-slate-50/50">
+              <div className="grid grid-cols-2 border-b border-slate-200 divide-x divide-slate-200 bg-emerald-50/30">
                 <div className="p-4 flex flex-col items-center justify-center text-center">
                   <div className="flex items-center gap-1.5 text-amber-500 font-bold text-sm mb-1">
                     <Trophy className="w-4 h-4" /> Won This Week
                   </div>
-                  <p className="text-xl font-bold text-slate-900">{formatCurrency(person.wonThisWeekValue)}</p>
-                  <p className="text-xs text-slate-500 mt-0.5">{person.wonThisWeekCount} deals closed</p>
+                  <p className="text-2xl font-bold text-slate-900">{formatCurrency(person.wonThisWeekValue)}</p>
+                  <p className="text-sm text-slate-500 mt-0.5">{person.wonThisWeekCount} deals closed</p>
                 </div>
                 
                 <div className="p-4 flex flex-col items-center justify-center text-center">
                   <div className="flex items-center gap-1.5 text-emerald-500 font-bold text-sm mb-1">
                     <Banknote className="w-4 h-4" /> Collected This Week
                   </div>
-                  <p className="text-xl font-bold text-slate-900">{formatCurrency(person.collectedThisWeek)}</p>
+                  <p className="text-2xl font-bold text-slate-900">{formatCurrency(person.collectedThisWeek)}</p>
+                  <p className="text-sm text-slate-500 mt-0.5">cash in bank</p>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-4 border-b border-slate-200 divide-x divide-slate-200 bg-slate-50/50">
+                <div className="p-4 flex flex-col items-center justify-center text-center">
+                  <div className="flex items-center gap-1.5 text-blue-500 font-bold text-sm mb-1">
+                    <PlusCircle className="w-4 h-4" /> Pipeline Added
+                  </div>
+                  <p className="text-xl font-bold text-slate-900">{person.createdThisWeekCount}</p>
+                  <p className="text-xs text-slate-500 mt-0.5">{formatCurrency(person.createdThisWeekValue)}</p>
                 </div>
 
                 <div className="p-4 flex flex-col items-center justify-center text-center">
-                  <div className="flex items-center gap-1.5 text-blue-500 font-bold text-sm mb-1">
+                  <div className="flex items-center gap-1.5 text-indigo-500 font-bold text-sm mb-1">
+                    <ArrowRight className="w-4 h-4" /> Progressed
+                  </div>
+                  <p className="text-xl font-bold text-slate-900">{person.progressedThisWeekCount}</p>
+                  <p className="text-xs text-slate-500 mt-0.5">deals updated</p>
+                </div>
+
+                <div className="p-4 flex flex-col items-center justify-center text-center">
+                  <div className="flex items-center gap-1.5 text-purple-500 font-bold text-sm mb-1">
+                    <PhoneCall className="w-4 h-4" /> Utilization
+                  </div>
+                  <p className="text-xl font-bold text-slate-900">{person.utilization.calls + person.utilization.tasks}</p>
+                  <p className="text-xs text-slate-500 mt-0.5">{person.utilization.calls} calls, {person.utilization.tasks} tasks</p>
+                </div>
+
+                <div className="p-4 flex flex-col items-center justify-center text-center">
+                  <div className="flex items-center gap-1.5 text-rose-500 font-bold text-sm mb-1">
                     <ShieldAlert className="w-4 h-4" /> CRM Hygiene
                   </div>
                   <div className="flex items-center gap-2 mt-1 w-full justify-center">
-                    <div className="w-24 bg-slate-200 rounded-full h-2">
+                    <div className="w-16 bg-slate-200 rounded-full h-2">
                       <div 
                         className={`h-2 rounded-full ${person.hygieneScore >= 80 ? 'bg-emerald-500' : person.hygieneScore >= 50 ? 'bg-amber-400' : 'bg-red-500'}`} 
                         style={{ width: `${person.hygieneScore}%` }}></div>
                     </div>
-                    <span className={`text-lg font-bold ${person.hygieneScore >= 80 ? 'text-emerald-500' : person.hygieneScore >= 50 ? 'text-amber-500' : 'text-red-500'}`}>
+                    <span className={`text-base font-bold ${person.hygieneScore >= 80 ? 'text-emerald-500' : person.hygieneScore >= 50 ? 'text-amber-500' : 'text-red-500'}`}>
                       {person.hygieneScore}%
                     </span>
                   </div>
-                  <p className="text-xs text-slate-500 mt-1">{person.hygieneIssues} active deals with issues</p>
+                  <p className="text-xs text-slate-500 mt-1">{person.hygieneIssues} issues</p>
                 </div>
               </div>
               

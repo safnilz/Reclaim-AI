@@ -14,6 +14,11 @@ export async function POST(req) {
       deals,
       wonThisWeekValue = 0,
       collectedThisWeek = 0,
+      createdThisWeekCount = 0,
+      createdThisWeekValue = 0,
+      progressedThisWeekCount = 0,
+      tasksCompleted = 0,
+      callsLogged = 0,
       hygieneScore = 100,
       hygieneIssues = 0
     } = await req.json();
@@ -26,12 +31,16 @@ export async function POST(req) {
 Here is their performance for THIS WEEK:
 - Deals Won Value: ${wonThisWeekValue}
 - Revenue Collected: ${collectedThisWeek}
+- Pipeline Generated: ${createdThisWeekCount} new deals (Value: ${createdThisWeekValue})
+- Pipeline Velocity: ${progressedThisWeekCount} deals progressed/updated
+- Utilization: ${callsLogged} calls logged, ${tasksCompleted} tasks completed
 - CRM Hygiene Score: ${hygieneScore}% (${hygieneIssues} active deals with missing or overdue next steps)
 
 Here is their current active pipeline from Zoho CRM:
 ${JSON.stringify(deals, null, 2)}
 
 Analyze this pipeline and their weekly performance. Look for:
+- If their utilization (calls/tasks) is low or they haven't generated any new pipeline, drill into what they've been doing all week.
 - If they haven't closed much or collected revenue this week, ask them why.
 - If their CRM hygiene is poor, press them on maintaining accurate data.
 - High value deals that are stuck (stale)

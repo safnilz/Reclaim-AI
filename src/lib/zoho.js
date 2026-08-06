@@ -95,7 +95,7 @@ export async function fetchAllActiveDeals(includeClosed = false) {
   const apiDomain = process.env.ZOHO_API_DOMAIN || 'https://www.zohoapis.com';
 
   while (hasMore) {
-    const url = `/Deals?fields=Deal_Name,Amount,Stage,Closing_Date,Next_Step,Modified_Time,Account_Name,Owner,Pipeline,Estimated_Revenue,Next_action,Next_action_date,Estimated_direct_cost,Proposal_Sent_Date,Decision_maker,Expected_close_date,Key_Objection_Open_Issue`;
+    const url = `/Deals?fields=Deal_Name,Amount,Stage,Closing_Date,Next_Step,Modified_Time,Created_Time,Account_Name,Owner,Pipeline,Estimated_Revenue,Next_action,Next_action_date,Estimated_direct_cost,Proposal_Sent_Date,Decision_maker,Expected_close_date,Key_Objection_Open_Issue`;
     const data = await zohoApiRequest(url + (pageToken ? `&page_token=${pageToken}` : ''));
     
     if (data && data.data) {
@@ -142,7 +142,8 @@ export async function fetchAllActiveDeals(includeClosed = false) {
     materialType: null,
     estimatedVolume: null,
     proposalSentDate: deal.Proposal_Sent_Date ? `${deal.Proposal_Sent_Date}T00:00:00Z` : null,
-    keyObjectionOpenIssue: deal.Key_Objection_Open_Issue || null
+    keyObjectionOpenIssue: deal.Key_Objection_Open_Issue || null,
+    createdTime: deal.Created_Time || null
   }));
 }
 
@@ -327,4 +328,45 @@ export async function fetchCollectedRevenueThisWeekBySalesperson() {
   });
   
   return collectedBySalesperson;
+}
+
+export async function fetchWeeklyUtilization() {
+  const today = new Date();
+  const dayOfWeek = today.getDay() || 7; 
+  const monday = new Date(today);
+  monday.setDate(today.getDate() - dayOfWeek + 1);
+  monday.setHours(0, 0, 0, 0);
+
+  let tasks = [];
+  let calls = [];
+  
+  try {
+    const tasksData = await zohoApiRequest('/Tasks?sort_by=Modified_Time&sort_order=desc&per_page=200');
+    if (tasksData && tasksData.data) {
+      tasks = tasksData.data.filter(t => t.Modified_Time && new Date(t.Modified_Time) >= monday);
+    }
+  } catch(e) { console.error('Error fetching Tasks:', e); }
+
+  try {
+    const callsData = await zohoApiRequest('/Calls?sort_by=Modified_Time&sort_order=desc&per_page=200');
+    if (callsData && callsData.data) {
+      calls = callsData.data.filter(c => c.Modified_Time && new Date(c.Modified_Time) >= monday);
+    }
+  } catch(e) { console.error('Error fetching Calls:', e); }
+
+  const utilization = {};
+  
+  const processActivity = (act, type) => {
+    const sp = act.Owner ? act.Owner.name : 'Unknown';
+    if (!utilization[sp]) {
+      utilization[sp] = { tasks: 0, calls: 0 };
+    }
+    if (type === 'task') utilization[sp].tasks += 1;
+    if (type === 'call') utilization[sp].calls += 1;
+  };
+
+  tasks.forEach(t => processActivity(t, 'task'));
+  calls.forEach(c => processActivity(c, 'call'));
+
+  return utilization;
 }
