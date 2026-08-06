@@ -69,13 +69,23 @@ export function calculateHygieneScore(opportunity) {
   let score = 100;
   const { status, missingFields } = calculateQualificationScore(opportunity);
   
-  if (missingFields.includes('nextAction')) score -= 10;
-  if (missingFields.includes('closeDate')) score -= 10;
+  if (missingFields.includes('nextAction')) score -= 15;
+  if (missingFields.includes('closeDate')) score -= 15;
   if (missingFields.includes('accountId')) score -= 5;
   if (missingFields.includes('ownerId')) score -= 5;
   
   const closeDateObj = opportunity.closeDate ? new Date(opportunity.closeDate) : null;
-  if (closeDateObj && differenceInDays(new Date(), closeDateObj) > 0) score -= 10;
+  if (closeDateObj && differenceInDays(new Date(), closeDateObj) > 0) score -= 15;
+
+  const nextActionDate = opportunity.nextActionDate ? new Date(opportunity.nextActionDate) : null;
+  if (nextActionDate && differenceInDays(new Date(), nextActionDate) > 0) score -= 15;
+  
+  const lastUpdated = opportunity.lastUpdated ? new Date(opportunity.lastUpdated) : new Date(0);
+  const diffDays = differenceInDays(new Date(), lastUpdated);
+  if (diffDays > 14) score -= 20;
+  else if (diffDays > 7) score -= 10;
+
+  score = Math.max(0, score);
 
   let category = 'High Risk';
   if (score >= 90) category = 'Excellent';

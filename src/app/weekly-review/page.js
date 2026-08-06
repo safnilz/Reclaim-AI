@@ -1,4 +1,5 @@
 import { fetchAllActiveDeals, fetchCollectedRevenueThisWeekBySalesperson } from '@/lib/zoho';
+import { calculateHygieneScore } from '@/lib/logic';
 import { PrismaClient } from '@prisma/client';
 import WeeklyReviewClient from './WeeklyReviewClient';
 
@@ -46,18 +47,10 @@ export default async function WeeklyReviewPage() {
       salesTeam[opp.ownerId].totalActiveDeals += 1;
       totalPipeline += (opp.expectedRevenue || 0);
       
-      // Check CRM Hygiene
-      let hasIssue = false;
-      if (!opp.nextAction) hasIssue = true; // Missing Next Step
-      else if (opp.nextActionDate && new Date(opp.nextActionDate) < today) hasIssue = true; // Overdue Next Step
-      else {
-        // Stale deal: no updates in 14 days
-        const lastUpdated = opp.lastUpdated ? new Date(opp.lastUpdated) : new Date(0);
-        const diffDays = Math.floor((today - lastUpdated) / (1000 * 60 * 60 * 24));
-        if (diffDays > 14) hasIssue = true;
-      }
-      
-      if (hasIssue) {
+      // Check CRM Hygiene using the universal logic
+      const hygiene = calculateHygieneScore(opp);
+      salesTeam[opp.ownerId].totalHygieneScore = (salesTeam[opp.ownerId].totalHygieneScore || 0) + hygiene.score;
+      if (hygiene.score < 75) {
         salesTeam[opp.ownerId].hygieneIssues += 1;
       }
     }
@@ -79,7 +72,7 @@ export default async function WeeklyReviewPage() {
     }
     
     const hygieneScore = person.totalActiveDeals > 0 
-      ? Math.round(((person.totalActiveDeals - person.hygieneIssues) / person.totalActiveDeals) * 100) 
+      ? Math.round((person.totalHygieneScore || 0) / person.totalActiveDeals) 
       : 100;
       
     return {
