@@ -58,6 +58,22 @@ If the user shares company knowledge or tells you to remember something, output 
       return acc;
     }, {});
     
+    // Determine which deals were updated this week (Monday to Sunday)
+    const today = new Date();
+    const dayOfWeek = today.getDay() || 7;
+    const monday = new Date(today);
+    monday.setDate(today.getDate() - dayOfWeek + 1);
+    monday.setHours(0, 0, 0, 0);
+
+    const updatedThisWeek = activeDeals
+      .filter(d => d.lastUpdated && new Date(d.lastUpdated) >= monday)
+      .map(d => ({
+        name: d.dealName,
+        stage: d.stage,
+        owner: d.ownerId,
+        revenue: d.expectedRevenue
+      }));
+    
     // Sort deals by revenue descending and take top 50
     const topDeals = [...activeDeals]
       .sort((a, b) => (Number(b.expectedRevenue) || 0) - (Number(a.expectedRevenue) || 0))
@@ -73,7 +89,8 @@ If the user shares company knowledge or tells you to remember something, output 
 
     const contextData = {
       pipelineSummary: { totalDeals, totalRevenue, dealsByStage },
-      top50LargestDeals: topDeals
+      top50LargestDeals: topDeals,
+      dealsUpdatedThisWeek: updatedThisWeek
     };
 
     // Pre-process user intent to determine if we need to call external tools
