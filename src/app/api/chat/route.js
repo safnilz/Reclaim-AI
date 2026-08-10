@@ -36,12 +36,12 @@ export async function POST(req) {
         model: groq('llama-3.1-8b-instant'), // Use 8B model for lightning fast intent analysis
         system: `You are an intent analyzer. Analyze the user query to determine if external data from Zoho CRM or Zoho Books is required to answer, OR if the user is explicitly telling you to remember/learn a fact, or sharing general company knowledge with you (e.g. who works where, company policies, competitors).
 Output ONLY a JSON array of tool calls. Do not output markdown. Available tools:
-- {"tool": "searchCrm", "args": {"module": "Deals|Accounts|Contacts|Leads", "criteria": "..."}}
-- {"tool": "getInactiveAccounts", "args": {"daysInactive": 200}}
-- {"tool": "getCollectedRevenue", "args": {}}
-- {"tool": "getUnpaidInvoices", "args": {}}
-- {"tool": "getCustomerInvoiceHistory", "args": {}}
-- {"tool": "learnFact", "args": {"fact": "the specific fact to remember"}}
+- {"tool": "searchCrm", "args": {"module": "Deals|Accounts|Contacts|Leads", "criteria": "..."}} (Search for specific records)
+- {"tool": "getInactiveAccounts", "args": {"daysInactive": 200}} (Find dormant or inactive accounts)
+- {"tool": "getCollectedRevenue", "args": {}} (Find revenue collected by salespeople)
+- {"tool": "getUnpaidInvoices", "args": {}} (Use this whenever the user asks about invoices, overdue invoices, outstanding payments, or debtors)
+- {"tool": "getCustomerInvoiceHistory", "args": {}} (Find billing history for customers)
+- {"tool": "learnFact", "args": {"fact": "the specific fact to remember"}} (Use this to remember user-provided facts)
 If the user shares company knowledge or tells you to remember something, output a learnFact tool call. If no tools are needed, output []. ONLY output a valid JSON array.`,
         prompt: recentMessages,
       }).catch(e => {
