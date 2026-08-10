@@ -19,8 +19,8 @@ export async function POST(req) {
   try {
     const { messages } = await req.json();
 
-    // Extract user message early
-    const userMessage = messages[messages.length - 1]?.content || "";
+    // Provide recent conversation history for intent analysis so follow-up questions work
+    const recentMessages = messages.slice(-4).map(m => `${m.role}: ${m.content}`).join('\n');
 
     // Run active deals fetch, learned facts fetch, and intent analysis concurrently to save time
     const [activeDeals, learnedFacts, toolPlanResult] = await Promise.all([
@@ -43,7 +43,7 @@ Output ONLY a JSON array of tool calls. Do not output markdown. Available tools:
 - {"tool": "getCustomerInvoiceHistory", "args": {}}
 - {"tool": "learnFact", "args": {"fact": "the specific fact to remember"}}
 If the user shares company knowledge or tells you to remember something, output a learnFact tool call. If no tools are needed, output []. ONLY output a valid JSON array.`,
-        prompt: userMessage,
+        prompt: recentMessages,
       }).catch(e => {
         console.error("Intent analyzer failed:", e);
         return { text: "[]" };
@@ -141,6 +141,8 @@ If the user shares company knowledge or tells you to remember something, output 
     // Inject the real-time context and any tool results into the system prompt
     const systemPrompt = `You are the AI Commercial Director of Ehfaaz. You were created by Safnil Zainudeen, a Growth Analyst at Ehfaaz.
 Your job is to answer the user's questions based on live CRM and Accounting data, and dynamically adapt based on Learned Facts.
+
+Today's date is: ${new Date().toISOString().split('T')[0]}.
 
 For pipeline and deal questions, rely on the LIVE ZOHO CRM PIPELINE DATA provided below, which contains summary metrics and the top 50 active deals.
 For specific deep-dive questions, relevant tool output has been dynamically fetched and injected below.
