@@ -19,8 +19,23 @@ export async function POST(req) {
   try {
     const { messages } = await req.json();
 
+    // The AI SDK client sends 'parts' for assistant messages when using toUIMessageStreamResponse.
+    // Normalize messages first so recentMessages can correctly read assistant content.
+    const normalizedMessages = messages.map(m => {
+      let content = m.content;
+      if (m.role === 'assistant' && m.parts && !m.content) {
+        content = m.parts.filter(p => p.type === 'text').map(p => p.text).join('');
+      }
+      
+      // Truncate long assistant messages to save context window and prevent token rate limits
+      if (m.role === 'assistant' && content.length > 1500) {
+        content = content.substring(0, 1500) + "\n...[truncated]";
+      }
+      return { ...m, content };
+    });
+
     // Provide recent conversation history for intent analysis so follow-up questions work
-    const recentMessages = messages.slice(-4).map(m => `${m.role}: ${m.content}`).join('\n');
+    const recentMessages = normalizedMessages.slice(-4).map(m => `${m.role}: ${m.content}`).join('\n');
 
     // Run active deals fetch, learned facts fetch, and intent analysis concurrently to save time
     const [activeDeals, learnedFacts, toolPlanResult] = await Promise.all([
@@ -74,17 +89,15 @@ If the user shares company knowledge or tells you to remember something, output 
         revenue: d.expectedRevenue
       }));
     
-    // Sort deals by revenue descending and take top 50
+    // Sort deals by revenue descending and take top 25 (reduced from 50 to save tokens)
     const topDeals = [...activeDeals]
       .sort((a, b) => (Number(b.expectedRevenue) || 0) - (Number(a.expectedRevenue) || 0))
-      .slice(0, 50)
+      .slice(0, 25)
       .map(d => ({
         name: d.dealName,
         stage: d.stage,
         revenue: d.expectedRevenue,
-        owner: d.ownerId,
-        decisionMaker: d.decisionMaker || "Missing",
-        contactPerson: d.contactPerson || "Missing"
+        owner: d.ownerId
       }));
 
     const contextData = {
@@ -111,7 +124,9 @@ If the user shares company knowledge or tells you to remember something, output 
               const res = await fetchCollectedRevenueBySalesperson();
               additionalContext += `\n[Tool getCollectedRevenue result]: ${JSON.stringify(res)}`;
             } else if (call.tool === 'getUnpaidInvoices') {
-              const res = await fetchUnpaidInvoices();
+              let res = await fetchUnpaidInvoices();
+              // Sort by oldest due date and slice to 100 to prevent token limits
+              res = res.sort((a,b) => new Date(a.dueDate) - new Date(b.dueDate)).slice(0, 100);
               additionalContext += `\n[Tool getUnpaidInvoices result]: ${JSON.stringify(res)}`;
             } else if (call.tool === 'getCustomerInvoiceHistory') {
               const res = await fetchCustomerInvoiceHistory();
@@ -157,18 +172,6 @@ ${JSON.stringify(contextData)}
 
 ADDITIONAL DYNAMIC CONTEXT (If any):
 ${additionalContext}`;
-
-    // The AI SDK client sends 'parts' for assistant messages when using toUIMessageStreamResponse.
-    // The AI provider requires 'content' to be a string. We must normalize this to prevent validation errors.
-    const normalizedMessages = messages.map(m => {
-      if (m.role === 'assistant' && m.parts && !m.content) {
-        return {
-          ...m,
-          content: m.parts.filter(p => p.type === 'text').map(p => p.text).join('')
-        };
-      }
-      return m;
-    });
 
     const result = streamText({
       model: groq('llama-3.3-70b-versatile'), // Switched to 70b model for better reasoning
