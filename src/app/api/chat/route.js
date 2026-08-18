@@ -54,7 +54,7 @@ Output ONLY a JSON array of tool calls. Do not output markdown. Available tools:
 - {"tool": "searchCrm", "args": {"module": "Deals|Accounts|Contacts|Leads", "criteria": "..."}} (Search for specific records)
 - {"tool": "getInactiveAccounts", "args": {"daysInactive": 200}} (Find dormant or inactive accounts)
 - {"tool": "getCollectedRevenue", "args": {}} (Find revenue collected by salespeople)
-- {"tool": "getUnpaidInvoices", "args": {}} (Use this whenever the user asks about invoices, overdue invoices, outstanding payments, or debtors)
+- {"tool": "getUnpaidInvoices", "args": {}} (Use this whenever the user asks about invoices, overdue invoices, outstanding payments, receivables, or debtors)
 - {"tool": "getCustomerInvoiceHistory", "args": {}} (Find billing history for customers)
 - {"tool": "learnFact", "args": {"fact": "the specific fact to remember"}} (Use this to remember user-provided facts)
 If the user shares company knowledge or tells you to remember something, output a learnFact tool call. If no tools are needed, output []. ONLY output a valid JSON array.`,
@@ -87,7 +87,8 @@ If the user shares company knowledge or tells you to remember something, output 
         stage: d.stage,
         owner: d.ownerId,
         revenue: d.expectedRevenue
-      }));
+      }))
+      .slice(0, 25); // Prevent token limit crashes during bulk CRM updates
     
     // Sort deals by revenue descending and take top 25 (reduced from 50 to save tokens)
     const topDeals = [...activeDeals]
@@ -126,7 +127,11 @@ If the user shares company knowledge or tells you to remember something, output 
             } else if (call.tool === 'getUnpaidInvoices') {
               let res = await fetchUnpaidInvoices();
               // Sort by oldest due date and slice to 100 to prevent token limits
-              res = res.sort((a,b) => new Date(a.dueDate) - new Date(b.dueDate)).slice(0, 100);
+              res = res.sort((a,b) => {
+                const dateA = a.dueDate ? new Date(a.dueDate).getTime() : Infinity;
+                const dateB = b.dueDate ? new Date(b.dueDate).getTime() : Infinity;
+                return dateA - dateB;
+              }).slice(0, 100);
               additionalContext += `\n[Tool getUnpaidInvoices result]: ${JSON.stringify(res)}`;
             } else if (call.tool === 'getCustomerInvoiceHistory') {
               const res = await fetchCustomerInvoiceHistory();
