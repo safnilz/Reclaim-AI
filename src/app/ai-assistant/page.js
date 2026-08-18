@@ -104,11 +104,11 @@ export default function AIAssistantPage() {
           
           {error && (
             <div className="flex gap-4 justify-start">
-              <div className="w-8 h-8 rounded-full bg-blue-600/20 border border-blue-500/30 flex items-center justify-center flex-shrink-0">
-                <Bot className="w-4 h-4 text-blue-500" />
+              <div className="w-8 h-8 rounded-full bg-red-600/20 border border-red-500/30 flex items-center justify-center flex-shrink-0">
+                <Bot className="w-4 h-4 text-red-500" />
               </div>
-              <div className="max-w-[80%] rounded-xl p-4 text-sm bg-white text-slate-800 border border-slate-200 shadow-sm">
-                I'm sorry, I don't have access to that information right now or encountered an issue. Could you try rephrasing your question?
+              <div className="max-w-[80%] rounded-xl p-4 text-sm bg-red-50 text-red-800 border border-red-200 shadow-sm">
+                <strong>Error:</strong> {error.message || "An unknown error occurred."}
               </div>
             </div>
           )}

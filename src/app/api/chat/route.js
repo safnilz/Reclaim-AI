@@ -182,7 +182,7 @@ ADDITIONAL DYNAMIC CONTEXT (If any):
 ${additionalContext}`;
 
     const result = streamText({
-      model: groq('llama-3.3-70b-versatile'), // Switched to 70b model for better reasoning
+      model: groq('llama-3.1-8b-instant'), // Switched back to 8b model to bypass Groq 70b free-tier rate limits
       system: systemPrompt,
       messages: normalizedMessages,
       maxSteps: 1
