@@ -126,13 +126,16 @@ If the user shares company knowledge or tells you to remember something, output 
               additionalContext += `\n[Tool getCollectedRevenue result]: ${JSON.stringify(res)}`;
             } else if (call.tool === 'getUnpaidInvoices') {
               let res = await fetchUnpaidInvoices();
-              // Sort by oldest due date and slice to 100 to prevent token limits
+              const totalUnpaidCount = res.length;
+              const totalUnpaidValue = res.reduce((sum, inv) => sum + (Number(inv.balance) || 0), 0);
+              
+              // Sort by oldest due date and slice to 20 to prevent token limits (Free tier Groq limits)
               res = res.sort((a,b) => {
                 const dateA = a.dueDate ? new Date(a.dueDate).getTime() : Infinity;
                 const dateB = b.dueDate ? new Date(b.dueDate).getTime() : Infinity;
                 return dateA - dateB;
-              }).slice(0, 100);
-              additionalContext += `\n[Tool getUnpaidInvoices result]: ${JSON.stringify(res)}`;
+              }).slice(0, 20);
+              additionalContext += `\n[Tool getUnpaidInvoices result]: Total Unpaid Invoices: ${totalUnpaidCount} | Total Unpaid Value: ${totalUnpaidValue} | Showing top 20 oldest:\n${JSON.stringify(res)}`;
             } else if (call.tool === 'getCustomerInvoiceHistory') {
               const res = await fetchCustomerInvoiceHistory();
               additionalContext += `\n[Tool getCustomerInvoiceHistory result]: ${JSON.stringify(res)}`;
