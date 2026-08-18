@@ -1,4 +1,4 @@
-import { groq } from '@ai-sdk/groq';
+import { google } from '@ai-sdk/google';
 import { streamText, generateText } from 'ai';
 import { z } from 'zod';
 import { PrismaClient } from '@prisma/client';
@@ -48,7 +48,7 @@ export async function POST(req) {
         return [];
       }),
       generateText({
-        model: groq('llama-3.1-8b-instant'), // Use 8B model for lightning fast intent analysis
+        model: google('gemini-1.5-flash'), // Use Gemini 1.5 Flash for lightning fast intent analysis
         system: `You are an intent analyzer. Analyze the user query to determine if external data from Zoho CRM or Zoho Books is required to answer, OR if the user is explicitly telling you to remember/learn a fact, or sharing general company knowledge with you (e.g. who works where, company policies, competitors).
 Output ONLY a JSON array of tool calls. Do not output markdown. Available tools:
 - {"tool": "searchCrm", "args": {"module": "Deals|Accounts|Contacts|Leads", "criteria": "..."}} (Search for specific records)
@@ -182,7 +182,7 @@ ADDITIONAL DYNAMIC CONTEXT (If any):
 ${additionalContext}`;
 
     const result = streamText({
-      model: groq('llama-3.1-8b-instant'), // Switched back to 8b model to bypass Groq 70b free-tier rate limits
+      model: google('gemini-1.5-flash'), // Switched to Gemini to bypass Groq rate limits completely
       system: systemPrompt,
       messages: normalizedMessages,
       maxSteps: 1
