@@ -48,7 +48,7 @@ export async function POST(req) {
         return [];
       }),
       generateText({
-        model: groq('llama3-8b-8192'), // Use highly reliable original Llama 3 8B model for intent
+        model: groq('openai/gpt-oss-20b'), // Using a model that is explicitly available on this API key
         system: `You are an intent analyzer. Analyze the user query to determine if external data from Zoho CRM or Zoho Books is required to answer, OR if the user is explicitly telling you to remember/learn a fact, or sharing general company knowledge with you (e.g. who works where, company policies, competitors).
 Output ONLY a JSON array of tool calls. Do not output markdown. Available tools:
 - {"tool": "searchCrm", "args": {"module": "Deals|Accounts|Contacts|Leads", "criteria": "..."}} (Search for specific records)
@@ -182,7 +182,7 @@ ADDITIONAL DYNAMIC CONTEXT (If any):
 ${additionalContext}`;
 
     const result = streamText({
-      model: groq('llama3-70b-8192'), // Using original legacy 70b model that is unrestricted
+      model: groq('openai/gpt-oss-120b'), // Using a model that is explicitly available on this API key
       system: systemPrompt,
       messages: normalizedMessages,
       maxSteps: 1
