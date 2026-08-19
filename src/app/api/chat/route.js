@@ -48,7 +48,7 @@ export async function POST(req) {
         return [];
       }),
       generateText({
-        model: groq('llama-3.1-8b-instant'), // Use 8B model for lightning fast intent analysis
+        model: groq('llama3-8b-8192'), // Use highly reliable original Llama 3 8B model for intent
         system: `You are an intent analyzer. Analyze the user query to determine if external data from Zoho CRM or Zoho Books is required to answer, OR if the user is explicitly telling you to remember/learn a fact, or sharing general company knowledge with you (e.g. who works where, company policies, competitors).
 Output ONLY a JSON array of tool calls. Do not output markdown. Available tools:
 - {"tool": "searchCrm", "args": {"module": "Deals|Accounts|Contacts|Leads", "criteria": "..."}} (Search for specific records)
@@ -182,7 +182,7 @@ ADDITIONAL DYNAMIC CONTEXT (If any):
 ${additionalContext}`;
 
     const result = streamText({
-      model: groq('llama-3.1-8b-instant'), // Switched back to 8b model to bypass Groq 70b free-tier rate limits
+      model: groq('llama-3.3-70b-versatile'), // Reverted back to the original working model
       system: systemPrompt,
       messages: normalizedMessages,
       maxSteps: 1
