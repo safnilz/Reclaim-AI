@@ -182,7 +182,7 @@ ADDITIONAL DYNAMIC CONTEXT (If any):
 ${additionalContext}`;
 
     const result = streamText({
-      model: groq('llama-3.3-70b-versatile'), // Reverted back to the original working model
+      model: groq('llama3-70b-8192'), // Using original legacy 70b model that is unrestricted
       system: systemPrompt,
       messages: normalizedMessages,
       maxSteps: 1
