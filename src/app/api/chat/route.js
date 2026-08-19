@@ -192,8 +192,8 @@ ${additionalContext}`;
   } catch (error) {
     console.error("AI Assistant Error:", error);
     return new Response(
-      JSON.stringify({ error: "Failed to generate AI response: " + error.message, stack: error.stack }),
-      { status: 500, headers: { 'Content-Type': 'application/json' } }
+      "Failed to generate AI response: " + error.message,
+      { status: 500, headers: { 'Content-Type': 'text/plain' } }
     );
   }
 }
